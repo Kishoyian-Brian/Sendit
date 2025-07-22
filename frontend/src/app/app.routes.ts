@@ -24,5 +24,5 @@ export const routes: Routes = [
     path: 'user-dashboard',
     loadComponent: () => import('./components/user/user-dashboard/user-dashboard').then(m => m.UserDashboard)
   },
-  { path: 'map-view', loadComponent: () => import('./components/map/map-view/map-view').then(m => m.MapView) }
+  { path: 'map-view/:trackingNumber', loadComponent: () => import('./components/map/map-view/map-view').then(m => m.MapView) }
 ];

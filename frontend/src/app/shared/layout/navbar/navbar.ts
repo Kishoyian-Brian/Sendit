@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
-  imports: [NgIf],
+  imports: [NgIf, RouterModule],
   templateUrl: './navbar.html',
   styles: ``
 })
 export class Navbar {
+  @Input() dashboardType?: 'admin' | 'driver';
   accountDropdownOpen = false;
 
   constructor(private router: Router, private authService: AuthService) {}
@@ -49,5 +51,29 @@ export class Navbar {
   logout() {
     this.authService.logout(this.router);
     this.closeAccountDropdown();
+  }
+
+  scrollToAbout(event: Event) {
+    event.preventDefault();
+    if (window.location.pathname === '/' || window.location.pathname === '/home') {
+      const aboutSection = document.getElementById('about-us');
+      if (aboutSection) {
+        aboutSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      this.router.navigate(['/'], { fragment: 'about-us' });
+    }
+  }
+
+  scrollToContact(event: Event) {
+    event.preventDefault();
+    if (window.location.pathname === '/' || window.location.pathname === '/home') {
+      const contactSection = document.getElementById('contact-us');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      this.router.navigate(['/'], { fragment: 'contact-us' });
+    }
   }
 }

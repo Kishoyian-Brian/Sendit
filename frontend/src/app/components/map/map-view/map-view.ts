@@ -1,7 +1,11 @@
 import { Component, OnInit, ViewChild, Input, Output, EventEmitter, OnDestroy, AfterViewInit, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { Parcel } from '../../../models/parcel.model';
+import { Navbar } from '../../../shared/layout/navbar/navbar';
+import { Footer } from '../../../shared/layout/footer/footer';
 
 interface DeliveryLocation {
   id: string;
@@ -16,7 +20,7 @@ interface DeliveryLocation {
 @Component({
   selector: 'app-map-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Navbar, Footer],
   templateUrl: './map-view.html',
   styles: `
     .map-container {
@@ -27,7 +31,7 @@ interface DeliveryLocation {
 })
 export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef;
-  @Input() parcels: Parcel[] = [];
+  parcels: Parcel[] = [];
   @Input() driverLocation: { lat: number, lng: number } | null = null;
   @Output() mapLocationSelected = new EventEmitter<{ lat: number, lng: number }>();
   @Input() centerLat: number = -1.2921;
@@ -38,11 +42,46 @@ export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private markers: L.Marker[] = [];
   private deliveryLocations: DeliveryLocation[] = [];
 
-  constructor() {
+  faq = [
+    {
+      question: "What Is a Tracking Number & Where Can I Find It?",
+      answer: "A tracking number is a unique code assigned to your parcel. You can find it in your confirmation email or receipt.",
+      open: false
+    },
+    {
+      question: "When will my tracking information appear?",
+      answer: "Tracking information appears as soon as your parcel is registered and scanned by our system.",
+      open: false
+    },
+    {
+      question: "Why is my tracking number/ID not working?",
+      answer: "Please double-check your tracking number. If it still doesn't work, contact our support team for assistance.",
+      open: false
+    },
+    {
+      question: "If I do not have my tracking number, is it still possible to track my shipment?",
+      answer: "Tracking is only possible with a valid tracking number. Please contact the sender or our support for help.",
+      open: false
+    }
+  ];
+
+  toggleFaq(index: number) {
+    this.faq[index].open = !this.faq[index].open;
+  }
+
+  constructor(private route: ActivatedRoute, private userService: UserService) {
     this.fixLeafletIcons();
   }
 
-  ngOnInit() {}
+  async ngOnInit() {
+    const trackingNumber = this.route.snapshot.paramMap.get('trackingNumber');
+    if (trackingNumber) {
+      const result = await this.userService.trackParcel(trackingNumber);
+      if (result.success && result.parcel) {
+        this.parcels = [result.parcel];
+      }
+    }
+  }
 
   ngAfterViewInit() {
     this.initializeMap();

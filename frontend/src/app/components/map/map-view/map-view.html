@@ -1,4 +1,40 @@
+<app-navbar></app-navbar>
+
 <!-- Map View Component -->
-<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="bg-white rounded-lg shadow-lg overflow-hidden my-8">
   <div #mapContainer class="map-container"></div>
 </div>
+
+<!-- Parcel Status Section -->
+<div *ngIf="parcels && parcels.length > 0" class="max-w-2xl mx-auto my-8 p-6 bg-white rounded-lg shadow flex flex-col items-center">
+  <h2 class="text-xl font-bold mb-2 text-red-700">Parcel Status</h2>
+  <div class="w-full flex flex-col gap-2 text-center">
+    <div><span class="font-semibold">Tracking #:</span> {{parcels[0].trackingNumber}}</div>
+    <div><span class="font-semibold">Status:</span> {{parcels[0].status | titlecase}}</div>
+    <div><span class="font-semibold">Sender:</span> {{parcels[0].sender}}</div>
+    <div><span class="font-semibold">Recipient:</span> {{parcels[0].recipient}}</div>
+    <div><span class="font-semibold">Delivery Address:</span> {{parcels[0].deliveryAddress}}</div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+<section class="w-full my-12 p-8 bg-gray-50 rounded-lg shadow">
+  <h2 class="text-2xl font-bold mb-6 text-red-700 text-center">Frequently Asked Questions</h2>
+  <div *ngFor="let item of faq; let i = index" class="mb-2 border-b">
+    <button
+      class="w-full text-left py-4 px-2 font-semibold flex justify-between items-center focus:outline-none"
+      (click)="toggleFaq(i)">
+      {{ item.question }}
+      <span class="ml-2 transition-transform duration-200" [ngStyle]="{ transform: item.open ? 'rotate(180deg)' : 'rotate(0deg)' }">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </button>
+    <div *ngIf="item.open" class="px-4 pb-4 text-gray-700 animate-fade-in">
+      {{ item.answer }}
+    </div>
+  </div>
+</section>
+
+<app-footer></app-footer>

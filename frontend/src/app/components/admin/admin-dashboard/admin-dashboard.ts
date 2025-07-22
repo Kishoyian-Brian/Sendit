@@ -8,6 +8,7 @@ import { Toast } from '../../toast/toast/toast';
 import { ParcelStatusPipe } from '../../../pipes/parcel-status-pipe';
 import { AdminService } from '../../../services/admin.service';
 import { Parcel } from '../../../models/parcel.model';
+import { MapView } from '../../map/map-view/map-view';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -19,7 +20,8 @@ import { Parcel } from '../../../models/parcel.model';
     Navbar,
     Footer,
     Toast,
-    ParcelStatusPipe
+    ParcelStatusPipe,
+    MapView
   ],
   templateUrl: './admin-dashboard.html',
   styles: ``
@@ -39,6 +41,7 @@ export class AdminDashboard implements OnInit {
   eligibleUsers: any[] = [];
   selectedUserEmail = '';
   newDriverPassword = '';
+  trackedParcel: Parcel | null = null;
 
   // Create Parcel form fields
   senderName = '';
@@ -196,5 +199,13 @@ export class AdminDashboard implements OnInit {
     } else {
       this.toast.show(result.message, 'error');
     }
+  }
+
+  openTrackParcelModal(parcel: Parcel) {
+    this.trackedParcel = parcel;
+  }
+
+  closeTrackParcelModal() {
+    this.trackedParcel = null;
   }
 }

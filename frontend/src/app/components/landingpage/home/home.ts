@@ -29,7 +29,7 @@ export class Home {
       return;
     }
     // Navigate to the map view if valid
-    this.router.navigate(['/map-view']);
+    this.router.navigate(['/map-view', this.trackingNumber]);
   }
 
   register() {
