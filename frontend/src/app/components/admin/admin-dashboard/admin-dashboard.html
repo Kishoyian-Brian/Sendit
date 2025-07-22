@@ -1,0 +1,339 @@
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-gray-100 p-6">
+  <!-- Main Grid -->
+  <div class="grid grid-cols-12 gap-6">
+    <!-- Sidebar -->
+    <div class="col-span-2 bg-white rounded-lg shadow-lg p-4">
+      <div class="space-y-2">
+        <button 
+          (click)="showSection('overview')"
+          class="w-full text-left px-4 py-2 rounded"
+          [class.bg-red-600]="currentSection === 'overview'"
+          [class.text-white]="currentSection === 'overview'"
+          [class.hover:bg-red-700]="currentSection === 'overview'"
+          [class.hover:bg-gray-100]="currentSection !== 'overview'"
+        >
+          Overview
+        </button>
+        <button 
+          (click)="showSection('parcels')"
+          class="w-full text-left px-4 py-2 rounded"
+          [class.bg-red-600]="currentSection === 'parcels'"
+          [class.text-white]="currentSection === 'parcels'"
+          [class.hover:bg-red-700]="currentSection === 'parcels'"
+          [class.hover:bg-gray-100]="currentSection !== 'parcels'"
+        >
+          Parcels
+        </button>
+        <button 
+          (click)="showSection('drivers')"
+          class="w-full text-left px-4 py-2 rounded"
+          [class.bg-red-600]="currentSection === 'drivers'"
+          [class.text-white]="currentSection === 'drivers'"
+          [class.hover:bg-red-700]="currentSection === 'drivers'"
+          [class.hover:bg-gray-100]="currentSection !== 'drivers'"
+        >
+          Drivers
+        </button>
+        <button 
+          (click)="showSection('reports')"
+          class="w-full text-left px-4 py-2 rounded"
+          [class.bg-red-600]="currentSection === 'reports'"
+          [class.text-white]="currentSection === 'reports'"
+          [class.hover:bg-red-700]="currentSection === 'reports'"
+          [class.hover:bg-gray-100]="currentSection !== 'reports'"
+        >
+          Reports
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-span-10 space-y-6">
+      <!-- Overview Section -->
+      @if (currentSection === 'overview') {
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-4 gap-6">
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-500 text-sm font-semibold">Total Parcels</h3>
+            <p class="text-3xl font-bold">{{stats.totalParcels}}</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-500 text-sm font-semibold">In Transit</h3>
+            <p class="text-3xl font-bold text-blue-600">{{stats.inTransit}}</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-500 text-sm font-semibold">Delivered</h3>
+            <p class="text-3xl font-bold text-green-600">{{stats.delivered}}</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-500 text-sm font-semibold">Active Drivers</h3>
+            <p class="text-3xl font-bold text-purple-600">{{stats.activeDrivers}}</p>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+          <!-- Add recent activity list here -->
+        </div>
+      }
+
+      <!-- Parcels Section -->
+      @if (currentSection === 'parcels') {
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Manage Parcels</h2>
+            <div class="flex gap-4">
+              <input 
+                type="text" 
+                [(ngModel)]="searchTerm"
+                placeholder="Search parcels..."
+                class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              >
+              <select 
+                [(ngModel)]="statusFilter"
+                class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in_transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+              </select>
+              <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" (click)="openCreateParcelModal()">
+                + New Parcel
+              </button>
+            </div>
+          </div>
+
+          <!-- Parcels Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tracking</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (parcel of filterParcels(); track parcel.id) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{parcel.id}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{parcel.trackingNumber}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{parcel.sender}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{parcel.recipient}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span 
+                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        [class.bg-yellow-100]="parcel.status === 'pending'"
+                        [class.text-yellow-800]="parcel.status === 'pending'"
+                        [class.bg-blue-100]="parcel.status === 'in_transit'"
+                        [class.text-blue-800]="parcel.status === 'in_transit'"
+                        [class.bg-green-100]="parcel.status === 'delivered'"
+                        [class.text-green-800]="parcel.status === 'delivered'"
+                      >
+                        {{parcel.status | parcelStatus}}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{parcel.driver}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                      <button class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Drivers Section -->
+      @if (currentSection === 'drivers') {
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Manage Drivers</h2>
+            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" (click)="openAddDriverModal()">
+              + Add Driver
+            </button>
+          </div>
+
+          <!-- Drivers Grid -->
+          <div class="grid grid-cols-2 gap-6">
+            @for (driver of drivers; track driver.id) {
+              <div class="border rounded-lg p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="text-lg font-semibold">{{driver.name}}</h3>
+                    <p class="text-gray-500">ID: {{driver.id}}</p>
+                  </div>
+                  <span 
+                    class="px-2 py-1 rounded-full text-sm font-semibold"
+                    [class.bg-green-100]="driver.status === 'active'"
+                    [class.text-green-800]="driver.status === 'active'"
+                    [class.bg-red-100]="driver.status === 'inactive'"
+                    [class.text-red-800]="driver.status === 'inactive'"
+                  >
+                    {{driver.status}}
+                  </span>
+                </div>
+                <div class="mt-4 space-y-2">
+                  <p class="text-sm">
+                    <span class="font-semibold">Location:</span> {{driver.currentLocation}}
+                  </p>
+                  <p class="text-sm">
+                    <span class="font-semibold">Deliveries:</span> {{driver.parcelsDelivered}}
+                  </p>
+                  <p class="text-sm">
+                    <span class="font-semibold">Rating:</span> {{driver.rating}}/5.0
+                  </p>
+                  <p class="text-sm">
+                    <span class="font-semibold">Phone:</span> {{driver.phone}}
+                  </p>
+                </div>
+                <div class="mt-4 flex justify-end gap-2">
+                  <button class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Edit
+                  </button>
+                  <button 
+                    class="px-3 py-1 rounded border"
+                    [class.bg-red-600]="driver.status === 'active'"
+                    [class.text-white]="driver.status === 'active'"
+                    [class.border-red-600]="driver.status === 'active'"
+                    [class.hover:bg-red-700]="driver.status === 'active'"
+                    [class.bg-green-600]="driver.status === 'inactive'"
+                    [class.text-white]="driver.status === 'inactive'"
+                    [class.border-green-600]="driver.status === 'inactive'"
+                    [class.hover:bg-green-700]="driver.status === 'inactive'"
+                    (click)="toggleDriverStatus(driver)"
+                  >
+                    {{driver.status === 'active' ? 'Deactivate' : 'Activate'}}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Reports Section -->
+      @if (currentSection === 'reports') {
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Reports</h2>
+            <button 
+              (click)="exportData()"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Export Data
+            </button>
+          </div>
+
+          <!-- Reports Grid -->
+          <div class="grid grid-cols-2 gap-6">
+            <!-- Add report cards/charts here -->
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>
+<app-toast #toast></app-toast>
+
+<!-- Modal for Create Parcel -->
+@if (showCreateParcelModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-xl shadow-lg p-0 w-full max-w-2xl mx-2 relative">
+      <button (click)="closeCreateParcelModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+      <form (ngSubmit)="createOrder()" class="py-2 px-3 sm:py-3 sm:px-6">
+        <h2 class="text-xl font-bold mb-3">Package Delivery Form</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Sender Name</label>
+            <input type="text" [(ngModel)]="senderName" name="senderName" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Sender Email</label>
+            <input type="email" [(ngModel)]="senderEmail" name="senderEmail" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Sender Phone</label>
+            <input type="text" [(ngModel)]="senderPhone" name="senderPhone" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Pickup Address</label>
+            <input type="text" [(ngModel)]="pickupAddress" name="pickupAddress" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Receiver Name</label>
+            <input type="text" [(ngModel)]="receiverName" name="receiverName" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Receiver Email</label>
+            <input type="email" [(ngModel)]="receiverEmail" name="receiverEmail" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Receiver Phone</label>
+            <input type="text" [(ngModel)]="receiverPhone" name="receiverPhone" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Delivery Address</label>
+            <input type="text" [(ngModel)]="deliveryAddress" name="deliveryAddress" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Package Weight (kg)</label>
+            <input type="number" [(ngModel)]="packageWeight" name="packageWeight" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Package Description</label>
+            <textarea [(ngModel)]="packageDescription" name="packageDescription" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm"></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-[#7B1C2F] font-semibold mb-0.5">Assign Driver</label>
+            <select [(ngModel)]="driverId" name="driverId" class="w-full px-2 py-1.5 border rounded shadow-inner focus:outline-none text-sm" required>
+              <option value="" disabled selected>Select a driver</option>
+              <option *ngFor="let driver of drivers" [value]="driver.id">{{driver.firstName}} {{driver.lastName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end mt-3">
+          <button type="submit" class="bg-[#7B1C2F] text-white px-4 py-1.5 rounded shadow hover:bg-[#BA0C2F] transition text-sm">Create Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Add Driver Modal -->
+@if (showAddDriverModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-xl shadow-lg p-0 w-full max-w-sm mx-2 relative">
+      <button (click)="closeAddDriverModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+      <form (ngSubmit)="addDriver()" class="py-4 px-6">
+        <h2 class="text-xl font-bold mb-4">Add Driver</h2>
+        <div class="mb-4">
+          <label class="block text-[#7B1C2F] font-semibold mb-1">Select User</label>
+          <select [(ngModel)]="selectedUserEmail" name="selectedUserEmail" class="w-full px-3 py-2 border rounded shadow-inner focus:outline-none text-sm" required>
+            <option value="" disabled selected>Select a user</option>
+            <option *ngFor="let user of eligibleUsers" [value]="user.email">{{user.name || (user.firstName + ' ' + user.lastName)}} ({{user.email}})</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-[#7B1C2F] font-semibold mb-1">Set Password</label>
+          <input type="password" [(ngModel)]="newDriverPassword" name="newDriverPassword" class="w-full px-3 py-2 border rounded shadow-inner focus:outline-none text-sm" required />
+        </div>
+        <div class="flex justify-end">
+          <button type="submit" class="bg-[#7B1C2F] text-white px-6 py-2 rounded shadow hover:bg-[#BA0C2F] transition">Add Driver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

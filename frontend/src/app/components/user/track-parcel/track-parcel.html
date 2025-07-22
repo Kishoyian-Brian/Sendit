@@ -1,0 +1,54 @@
+<div class="min-h-screen bg-gray-100 flex flex-col">
+  <app-navbar></app-navbar>
+  <div class="flex-grow flex flex-col items-center py-8 px-2 bg-gray-200">
+    <div class="w-full max-w-2xl">
+      <div class="mb-6">
+        <input
+          [(ngModel)]="trackingNumber"
+          type="text"
+          placeholder="Enter Tracking Number"
+          class="w-3/4 px-4 py-3 border rounded-l bg-white focus:outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900"
+        />
+        <button
+          (click)="trackParcel()"
+          class="w-1/4 bg-[#BA0C2F] text-white px-6 py-3 rounded-r font-bold hover:bg-[#a40a29] transition"
+        >
+          Track
+        </button>
+      </div>
+      <div *ngIf="errorMessage" class="bg-red-100 text-red-700 rounded p-4 mb-4 text-center">{{ errorMessage }}</div>
+      <div *ngIf="foundParcel" class="bg-white rounded-lg shadow p-6 mb-8 flex flex-col items-center">
+        <h3 class="text-xl font-bold mb-2">Parcel Details</h3>
+        <div class="w-full flex flex-col gap-2 mb-4">
+          <div><span class="font-semibold">Tracking Number:</span> {{ foundParcel.trackingNumber }}</div>
+          <div><span class="font-semibold">Status:</span> {{ foundParcel.status }}</div>
+          <div><span class="font-semibold">Sender:</span> {{ foundParcel.sender }}</div>
+          <div><span class="font-semibold">Recipient:</span> {{ foundParcel.recipient }}</div>
+          <div><span class="font-semibold">Pickup Address:</span> {{ foundParcel.pickupAddress }}</div>
+          <div><span class="font-semibold">Delivery Address:</span> {{ foundParcel.deliveryAddress }}</div>
+          <div><span class="font-semibold">Weight:</span> {{ foundParcel.weight }} kg</div>
+          <div><span class="font-semibold">Driver:</span> {{ foundParcel.driver }}</div>
+          <div><span class="font-semibold">Created At:</span> {{ foundParcel.createdAt | date:'short' }}</div>
+        </div>
+        <!-- Map Placeholder -->
+        <div class="w-full h-64 bg-gray-200 flex items-center justify-center mb-6">
+          <span class="text-gray-400 text-lg">[Map or Parcel Route Visualization Here]</span>
+        </div>
+      </div>
+      <!-- FAQ Section -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold mb-4">Frequently Asked Questions</h3>
+        <div>
+          <div *ngFor="let faq of faqs" class="border-b last:border-b-0">
+            <button (click)="toggleFaq(faq)" class="w-full text-left py-3 font-medium flex justify-between items-center">
+              <span>{{ faq.question }}</span>
+              <span class="ml-2">{{ faq.open ? '▲' : '▼' }}</span>
+            </button>
+            <div *ngIf="faq.open" class="py-2 text-gray-700">{{ faq.answer }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <app-footer></app-footer>
+</div>

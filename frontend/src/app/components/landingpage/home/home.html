@@ -1,0 +1,66 @@
+<!-- landing.component.html -->
+
+<app-navbar></app-navbar>
+
+<!-- Hero Section with Centered Search Box and Button Inside Input -->
+<section class="relative h-[80vh] bg-gray-200 flex items-center justify-center">
+  <img src="https://www.europe-consommateurs.eu/fileadmin/_processed_/a/0/csm_livraison-pexels-tima-miroshnichenko-6169668_5a38fc6c2e.jpg" alt="Delivery Van" class="w-full h-full object-cover absolute inset-0 z-0">
+  <div class="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+  <div class="relative z-20 flex flex-col items-center w-full">
+    <div class="relative w-full max-w-2xl mx-auto">
+      <input
+        [(ngModel)]="trackingNumber"
+        type="text"
+        placeholder="Enter Your Tracking Number"
+        class="w-full p-4 pr-32 rounded-lg text-black text-lg outline-none shadow-lg"
+      />
+      <button
+        (click)="trackParcel()"
+        class="absolute top-1/2 right-2 -translate-y-1/2 bg-red-700 text-white px-8 py-2 rounded-lg text-lg font-semibold hover:bg-red-800 transition shadow"
+        style="min-width: 110px;"
+      >
+        Track
+      </button>
+    </div>
+  </div>
+  <!-- Overlayed Cards (keep as before) -->
+  <div class="absolute left-1/2 bottom-[-60px] transform -translate-x-1/2 z-30 w-full max-w-5xl px-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+      <div class="shadow-lg p-6 bg-white rounded-lg">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzUCUbK2B_nCD32NI07IGlDGXlG0J2pXhOoQ&s" alt="Send Now" class="mx-auto mb-4 w-10 h-10">
+        <h3 class="font-bold">SEND NOW</h3>
+        <p>Find the right services</p>
+      </div>
+      <div class="shadow-lg p-6 bg-white rounded-lg">
+        <img src="https://thumbs.dreamstime.com/b/hours-red-clock-sign-icon-flat-style-twenty-four-hour-open-vector-illustration-white-isolated-timetable-business-background-150911200.jpg" alt="24HRS Tracking" class="mx-auto mb-4 h-20 w-20">
+        <h3 class="font-bold">24HRS Tracking</h3>
+        <p>Track your parcel anytime</p>
+      </div>
+      <div class="shadow-lg p-6 bg-white rounded-lg">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYk4amCE53P4T5ShDRZQSLp-WfHEDpVfs4KA&s" alt="Secure Nationwide" class="mx-auto mb-4 w-10 h-10">
+        <h3 class="font-bold">Fast, secure, Nationwide</h3>
+        <p>Don't be left out. Get your Account Today</p>
+        <button (click)="register()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded">Register</button>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- Add extra margin-top to the next section to avoid overlap -->
+<div class="mt-32"></div>
+
+<!-- Delivery Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8 px-6 py-20 bg-white min-h-[500px]">
+  <div class="flex flex-col justify-center">
+    <h2 class="text-2xl md:text-3xl font-bold mb-6">Document and Parcel Delivery</h2>
+    <p class="mb-6 text-lg">Learn about Sendit Express – your trusted partner for fast, secure, and reliable parcel delivery. Track your parcels in real-time, receive instant notifications.</p>
+    <button (click)="sendNow()" class="bg-red-700 text-white px-8 py-3 rounded text-lg font-semibold">Send Now</button>
+  </div>
+  <div class="flex items-center justify-center">
+    <img src="https://img.freepik.com/premium-photo/man-receiving-package-from-delivery-man-appending-signature-digital-mobile-phone-after-receiving-parcel-from-courier-home-online-shopping_38391-602.jpg" alt="Delivery" class="w-full max-w-md rounded shadow-lg">
+  </div>
+</section>
+
+<!-- Gap before footer -->
+<div class="my-16"></div>
+
+<app-footer></app-footer>
