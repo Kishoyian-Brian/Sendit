@@ -1,12 +1,11 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 export const userGuard = () => {
+  const authService = inject(AuthService);
   const router = inject(Router);
-  const loggedIn = localStorage.getItem('loggedIn') === 'true';
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-  const isDriver = localStorage.getItem('isDriver') === 'true';
-  if (loggedIn && !isAdmin && !isDriver) {
+  if (authService.isUser()) {
     return true;
   }
   router.navigate(['/login']);

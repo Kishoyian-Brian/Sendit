@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { User } from '../models/user.model';
 import { Driver } from '../models/driver.model';
 import { Admin } from '../models/admin.model';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -73,5 +74,34 @@ export class AuthService {
     }
 
     return { success: false, message: 'Invalid email or password.' };
+  }
+
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('user_data') || !!localStorage.getItem('admin_data') || !!localStorage.getItem('driver_data');
+  }
+
+  isAdmin(): boolean {
+    return localStorage.getItem('isAdmin') === 'true';
+  }
+
+  isDriver(): boolean {
+    return localStorage.getItem('isDriver') === 'true';
+  }
+
+  isUser(): boolean {
+    const loggedIn = localStorage.getItem('loggedIn') === 'true';
+    const isAdmin = this.isAdmin();
+    const isDriver = this.isDriver();
+    return loggedIn && !isAdmin && !isDriver;
+  }
+
+  logout(router: Router) {
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('admin_data');
+    localStorage.removeItem('driver_data');
+    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('isDriver');
+    router.navigate(['/']);
   }
 } 

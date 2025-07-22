@@ -1,21 +1,21 @@
 <nav class="w-full h-20 bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center px-8 justify-between z-50 relative">
-  <a routerLink="/" class="w-36 h-6 flex items-center text-rose-700 text-3xl font-bold font-['Inter']">SENDIT</a>
+  <a routerLink="/" class="w-36 h-6 flex items-center text-rose-700 text-3xl font-bold font-['Inter'] cursor-pointer hover:text-rose-900 transition">SENDIT</a>
   <div class="flex gap-8 items-center">
-    <a routerLink="/" class="w-20 h-6 flex items-center text-black text-xl font-normal font-['Inter']">HOME</a>
-    <a routerLink="/about" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter']">ABOUT</a>
-    <a routerLink="/contact" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter']">CONTACT</a>
-    <a routerLink="/user-dashboard" class="w-28 h-6 flex items-center text-black text-base font-normal font-['Inter']">PARCELS</a>
+    <a routerLink="/" class="w-20 h-6 flex items-center text-black text-xl font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">HOME</a>
+    <a routerLink="/about" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">ABOUT</a>
+    <a routerLink="/contact" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">CONTACT</a>
+    <a *ngIf="isLoggedIn" (click)="goToParcel()" class="w-28 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">PARCELS</a>
     <div class="relative w-28 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer">
-      <span (click)="toggleAccountDropdown()">ACCOUNT</span>
+      <span (click)="toggleAccountDropdown()" class="cursor-pointer hover:text-rose-700 transition">ACCOUNT</span>
       <div *ngIf="accountDropdownOpen" class="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-10">
         <ng-container *ngIf="isLoggedIn; else guestLinks">
-          <a (click)="goToProfile()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</a>
-          <a (click)="logout()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Logout</a>
+          <a (click)="goToProfile()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer transition">Profile</a>
+          <a (click)="logout()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer transition">Logout</a>
         </ng-container>
         <ng-template #guestLinks>
-          <a (click)="goToRegister()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Register</a>
-          <a (click)="goToLogin()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Login</a>
-          <a (click)="goToParcel()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer">Parcel</a>
+          <a (click)="goToRegister()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer transition">Register</a>
+          <a (click)="goToLogin()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer transition">Login</a>
+          <a (click)="goToParcel()" class="block px-4 py-2 hover:bg-gray-100 cursor-pointer transition">Parcel</a>
         </ng-template>
       </div>
     </div>

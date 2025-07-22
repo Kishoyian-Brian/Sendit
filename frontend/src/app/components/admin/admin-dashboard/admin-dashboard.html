@@ -46,6 +46,16 @@
         >
           Reports
         </button>
+        <button 
+          (click)="showSection('map')"
+          class="w-full text-left px-4 py-2 rounded"
+          [class.bg-red-600]="currentSection === 'map'"
+          [class.text-white]="currentSection === 'map'"
+          [class.hover:bg-red-700]="currentSection === 'map'"
+          [class.hover:bg-gray-100]="currentSection !== 'map'"
+        >
+          🗺️ Map View
+        </button>
       </div>
     </div>
 

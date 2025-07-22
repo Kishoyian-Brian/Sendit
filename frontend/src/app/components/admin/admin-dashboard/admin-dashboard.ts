@@ -28,7 +28,7 @@ export class AdminDashboard implements OnInit {
   @ViewChild('toast') toast!: Toast;
 
   stats: any = {};
-  currentSection: 'overview' | 'parcels' | 'drivers' | 'reports' = 'overview';
+  currentSection: 'overview' | 'parcels' | 'drivers' | 'reports' | 'map' = 'overview';
   searchTerm = '';
   statusFilter: string = 'all';
   dateFilter: string = 'all';
@@ -65,7 +65,7 @@ export class AdminDashboard implements OnInit {
     this.stats = await this.adminService.getStats();
   }
 
-  showSection(section: 'overview' | 'parcels' | 'drivers' | 'reports') {
+  showSection(section: 'overview' | 'parcels' | 'drivers' | 'reports' | 'map') {
     this.currentSection = section;
   }
 

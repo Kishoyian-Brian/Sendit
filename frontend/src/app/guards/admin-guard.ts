@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 export const adminGuard = () => {
+  const authService = inject(AuthService);
   const router = inject(Router);
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-  const adminData = localStorage.getItem('admin_data');
-  if (isAdmin && adminData) {
+  if (authService.isAdmin()) {
     return true;
   }
   router.navigate(['/login']);

@@ -19,4 +19,5 @@ export interface Parcel {
   createdAt: string;
   deliveredAt?: string;
   eta?: string;
+  currentLocation?: { lat: number; lng: number };
 }

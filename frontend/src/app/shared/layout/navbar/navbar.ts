@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -11,10 +12,10 @@ import { Router } from '@angular/router';
 export class Navbar {
   accountDropdownOpen = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   get isLoggedIn(): boolean {
-    return localStorage.getItem('loggedIn') === 'true';
+    return this.authService.isLoggedIn();
   }
 
   toggleAccountDropdown() {
@@ -46,8 +47,7 @@ export class Navbar {
   }
 
   logout() {
-    localStorage.clear();
+    this.authService.logout(this.router);
     this.closeAccountDropdown();
-    this.router.navigate(['/']);
   }
 }

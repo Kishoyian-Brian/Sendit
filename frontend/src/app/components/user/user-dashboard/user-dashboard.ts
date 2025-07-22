@@ -1,130 +1,64 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { UserService } from '../../../services/user.service';
 import { Navbar } from '../../../shared/layout/navbar/navbar';
 import { Footer } from '../../../shared/layout/footer/footer';
-import { Toast } from '../../toast/toast/toast';
-import { ParcelStatusPipe } from '../../../pipes/parcel-status-pipe';
-import { FormatDatePipe } from '../../../pipes/format-date-pipe';
-import { UserService } from '../../../services/user.service';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
+import { Parcel } from '../../../models/parcel.model';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    Navbar,
-    Footer,
-    Toast,
-    ParcelStatusPipe,
-    FormatDatePipe
-  ],
+  imports: [CommonModule, Navbar, Footer],
   templateUrl: './user-dashboard.html',
-  styles: ``
+  styles: []
 })
 export class UserDashboard implements OnInit {
-  @ViewChild('toast') toast!: Toast;
+  sentParcels: Parcel[] = [];
+  receivedParcels: Parcel[] = [];
+  loading = true;
+  currentView: 'sent' | 'received' | 'notifications' = 'sent';
 
-  currentSection: 'overview' | 'sent' | 'received' | 'notifications' = 'overview';
-  searchTerm = '';
-  statusFilter: string = 'all';
-  dateFilter: string = 'all';
-  trackingNumber = '';
-
-  // Data
-  user: any = null;
-  stats: any = {};
-  sentParcels: any[] = [];
-  receivedParcels: any[] = [];
-  notifications: any[] = [];
-
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   async ngOnInit() {
-    await this.loadAll();
+    this.loading = true;
+    this.sentParcels = await this.userService.getSentParcels();
+    this.receivedParcels = await this.userService.getReceivedParcels();
+    this.loading = false;
   }
 
-  async loadAll() {
-    try {
-      const [user, stats, sent, received, notifications] = await Promise.all([
-        this.userService.getCurrentUser(),
-        this.userService.getDashboardStats(),
-        this.userService.getSentParcels(),
-        this.userService.getReceivedParcels(),
-        this.userService.getNotifications()
-      ]);
+  showView(view: 'sent' | 'received' | 'notifications') {
+    this.currentView = view;
+  }
 
-      this.user = user;
-      this.stats = stats;
-      this.sentParcels = sent;
-      this.receivedParcels = received;
-      this.notifications = notifications;
-    } catch (error) {
-      this.toast.show('Error loading dashboard data', 'error');
+  logout() {
+    this.authService.logout(this.router);
+  }
+
+  getStepStatus(parcelStatus: 'pending' | 'in_transit' | 'delivered' | 'assigned' | 'pending_pickup', step: 'picked' | 'transit' | 'delivered'): 'complete' | 'active' | 'pending' {
+    const statusOrder: ('pending' | 'in_transit' | 'delivered' | 'assigned' | 'pending_pickup')[] = ['pending', 'assigned', 'pending_pickup', 'in_transit', 'delivered'];
+    const currentStatusIndex = statusOrder.indexOf(parcelStatus);
+
+    if (step === 'picked') {
+      if (currentStatusIndex >= 3) return 'complete'; // In transit or delivered
+      if (currentStatusIndex >= 1) return 'active'; // Assigned or pending_pickup
+      return 'pending';
     }
-  }
-
-  showSection(section: 'overview' | 'sent' | 'received' | 'notifications') {
-    this.currentSection = section;
-  }
-
-  async trackParcel() {
-    if (!this.trackingNumber) {
-      this.toast.show('Please enter a tracking number', 'error');
-      return;
+    if (step === 'transit') {
+      if (parcelStatus === 'delivered') return 'complete';
+      if (parcelStatus === 'in_transit') return 'active';
+      return 'pending';
     }
-
-    const result = await this.userService.trackParcel(this.trackingNumber);
-    if (result.success) {
-      this.toast.show('Parcel found!', 'success');
-      // You could navigate to a detailed tracking view here
-    } else {
-      this.toast.show(result.message, 'error');
+    if (step === 'delivered') {
+      if (parcelStatus === 'delivered') return 'complete';
+      return 'pending';
     }
+    return 'pending';
   }
-
-  async markNotificationAsRead(notificationId: string) {
-    await this.userService.markNotificationAsRead(notificationId);
-    await this.loadAll(); // Reload to get updated notification status
-    this.toast.show('Notification marked as read', 'success');
-  }
-
-  async updateProfile(update: any) {
-    const result = await this.userService.updateProfile(update);
-    this.toast.show(result.message, result.success ? 'success' : 'error');
-    if (result.success) {
-      await this.loadAll();
-    }
-  }
-
-  filterParcels(parcels: any[]) {
-    let filtered = [...parcels];
-    
-    if (this.searchTerm) {
-      const search = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.trackingNumber.toLowerCase().includes(search) ||
-        p.status.toLowerCase().includes(search)
-      );
-    }
-    
-    if (this.statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.status === this.statusFilter);
-    }
-    
-    // Add date filtering logic here if needed
-    
-    return filtered;
-  }
-
-  get filteredSentParcels() {
-    return this.filterParcels(this.sentParcels);
-  }
-
-  get filteredReceivedParcels() {
-    return this.filterParcels(this.receivedParcels);
-  }
-}
+} 
