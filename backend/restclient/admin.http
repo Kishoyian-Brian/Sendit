@@ -1,0 +1,59 @@
+### Admin Management Tests
+
+### 1. Get all users (admin only)
+GET http://localhost:3000/admin/users
+Authorization: Bearer {{adminToken}}
+
+### 2. Get all drivers (admin only)
+GET http://localhost:3000/admin/drivers
+Authorization: Bearer {{adminToken}}
+
+### 3. Create a new driver (admin only)
+POST http://localhost:3000/admin/drivers
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Mike Driver",
+  "email": "mike.driver@sendit.com",
+  "password": "driver123",
+  "phone": "+1555123456",
+  "vehicle": "Ford Transit Van"
+}
+
+### 4. Create a new admin (admin only)
+POST http://localhost:3000/admin/admins
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Sarah Admin",
+  "email": "sarah.admin@sendit.com",
+  "password": "admin123"
+}
+
+### 5. Update driver status (admin only)
+PATCH http://localhost:3000/admin/drivers/1
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "ACTIVE"
+}
+
+### 6. Get system statistics (admin only)
+GET http://localhost:3000/admin/stats
+Authorization: Bearer {{adminToken}}
+
+### 7. Get all parcels with details (admin only)
+GET http://localhost:3000/admin/parcels
+Authorization: Bearer {{adminToken}}
+
+### 8. Update user role (admin only)
+PATCH http://localhost:3000/admin/users/1
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "role": "DRIVER"
+} 

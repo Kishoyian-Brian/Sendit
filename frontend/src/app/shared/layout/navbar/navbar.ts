@@ -76,4 +76,16 @@ export class Navbar {
       this.router.navigate(['/'], { fragment: 'contact-us' });
     }
   }
+
+  scrollToHero(event: Event) {
+    event.preventDefault();
+    if (window.location.pathname === '/' || window.location.pathname === '/home') {
+      const heroSection = document.getElementById('hero-section');
+      if (heroSection) {
+        heroSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      this.router.navigate(['/'], { fragment: 'hero-section' });
+    }
+  }
 }

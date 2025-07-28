@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Parcel Created - SendIt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .parcel-info {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .tracking-number {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 Parcel Created Successfully!</h1>
+        <p>Your delivery is being processed</p>
+    </div>
+    
+    <div class="content">
+        <h2>Hello {{recipientName}},</h2>
+        
+        <p>A new parcel has been created for you and is ready for pickup.</p>
+        
+        <div class="tracking-number">
+            Tracking Number: {{trackingNumber}}
+        </div>
+        
+        <div class="parcel-info">
+            <h3>📋 Parcel Details:</h3>
+            <p><strong>Recipient:</strong> {{recipientName}}</p>
+            <p><strong>Pickup Address:</strong> {{pickupAddress}}</p>
+            <p><strong>Delivery Address:</strong> {{deliveryAddress}}</p>
+            {{#if weight}}<p><strong>Weight:</strong> {{weight}}</p>{{/if}}
+            {{#if description}}<p><strong>Description:</strong> {{description}}</p>{{/if}}
+            <p><strong>Status:</strong> <span style="color: #667eea; font-weight: bold;">{{status}}</span></p>
+        </div>
+        
+        <p><strong>What happens next?</strong></p>
+        <ol>
+            <li>Our driver will be assigned to your parcel</li>
+            <li>You'll receive pickup confirmation</li>
+            <li>Real-time tracking will be available</li>
+            <li>Delivery updates will be sent to your email</li>
+        </ol>
+        
+        <div style="text-align: center;">
+            <a href="{{trackingUrl}}" class="button">Track Your Parcel</a>
+        </div>
+        
+        <p>You can track your parcel anytime using the tracking number above.</p>
+        
+        <p>Best regards,<br>
+        The SendIt Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 SendIt. All rights reserved.</p>
+        <p>This email was sent to {{recipientEmail}}</p>
+    </div>
+</body>
+</html> 

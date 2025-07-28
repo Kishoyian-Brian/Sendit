@@ -12,7 +12,7 @@ interface DeliveryLocation {
   lat: number;
   lng: number;
   title: string;
-  type: 'pickup' | 'delivery' | 'driver';
+  type: 'pickup' | 'delivery' | 'driver' | 'route';
   status?: string;
   address?: string;
 }
@@ -31,16 +31,18 @@ interface DeliveryLocation {
 })
 export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef;
-  parcels: Parcel[] = [];
+  @Input() parcels: Parcel[] = [];
   @Input() driverLocation: { lat: number, lng: number } | null = null;
   @Output() mapLocationSelected = new EventEmitter<{ lat: number, lng: number }>();
   @Input() centerLat: number = -1.2921;
   @Input() centerLng: number = 36.8219;
   @Input() zoom: number = 12;
+  @Input() hideExtras: boolean = false;
 
   private map!: L.Map;
   private markers: L.Marker[] = [];
   private deliveryLocations: DeliveryLocation[] = [];
+  dataLoaded = false;
 
   faq = [
     {
@@ -74,17 +76,32 @@ export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   }
 
   async ngOnInit() {
-    const trackingNumber = this.route.snapshot.paramMap.get('trackingNumber');
-    if (trackingNumber) {
-      const result = await this.userService.trackParcel(trackingNumber);
-      if (result.success && result.parcel) {
-        this.parcels = [result.parcel];
+    if (!this.parcels || this.parcels.length === 0) {
+      const trackingNumber = this.route.snapshot.paramMap.get('trackingNumber');
+      if (trackingNumber) {
+        const result = await this.userService.trackParcel(trackingNumber);
+        if (result.success && result.parcel) {
+          this.parcels = [result.parcel];
+        }
       }
     }
+    this.dataLoaded = true;
   }
 
   ngAfterViewInit() {
-    this.initializeMap();
+    // Wait for dataLoaded before initializing the map
+    if (this.dataLoaded) {
+      this.initializeMap();
+    } else {
+      const checkData = () => {
+        if (this.dataLoaded) {
+          this.initializeMap();
+        } else {
+          setTimeout(checkData, 50);
+        }
+      };
+      checkData();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -126,24 +143,74 @@ export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private transformParcelsToLocations() {
     this.deliveryLocations = this.parcels.flatMap(parcel => {
       const locations: DeliveryLocation[] = [];
-      locations.push({
-        id: `pickup-${parcel.id}`,
-        lat: this.getRandomLatLng().lat, // Replace with actual coords if available
-        lng: this.getRandomLatLng().lng,
-        title: `Pickup: ${parcel.sender}`,
-        type: 'pickup',
-        status: parcel.status,
-        address: parcel.pickupAddress
-      });
-      locations.push({
-        id: `delivery-${parcel.id}`,
-        lat: this.getRandomLatLng().lat, // Replace with actual coords if available
-        lng: this.getRandomLatLng().lng,
-        title: `Delivery: ${parcel.recipient}`,
-        type: 'delivery',
-        status: parcel.status,
-        address: parcel.deliveryAddress
-      });
+      // Use real pickupLocation if available
+      if (parcel.pickupLocation && parcel.pickupLocation.lat && parcel.pickupLocation.lng) {
+        locations.push({
+          id: `pickup-${parcel.id}`,
+          lat: parcel.pickupLocation.lat,
+          lng: parcel.pickupLocation.lng,
+          title: `Pickup: ${parcel.sender}`,
+          type: 'pickup',
+          status: parcel.status,
+          address: parcel.pickupAddress
+        });
+      } else {
+        locations.push({
+          id: `pickup-${parcel.id}`,
+          lat: this.getRandomLatLng().lat,
+          lng: this.getRandomLatLng().lng,
+          title: `Pickup: ${parcel.sender}`,
+          type: 'pickup',
+          status: parcel.status,
+          address: parcel.pickupAddress
+        });
+      }
+      // Use real deliveryLocation if available
+      if (parcel.deliveryLocation && parcel.deliveryLocation.lat && parcel.deliveryLocation.lng) {
+        locations.push({
+          id: `delivery-${parcel.id}`,
+          lat: parcel.deliveryLocation.lat,
+          lng: parcel.deliveryLocation.lng,
+          title: `Delivery: ${parcel.recipient}`,
+          type: 'delivery',
+          status: parcel.status,
+          address: parcel.deliveryAddress
+        });
+      } else {
+        locations.push({
+          id: `delivery-${parcel.id}`,
+          lat: this.getRandomLatLng().lat,
+          lng: this.getRandomLatLng().lng,
+          title: `Delivery: ${parcel.recipient}`,
+          type: 'delivery',
+          status: parcel.status,
+          address: parcel.deliveryAddress
+        });
+      }
+      // Use currentLocation for live parcel location if available
+      if (parcel.currentLocation && parcel.currentLocation.lat && parcel.currentLocation.lng) {
+        locations.push({
+          id: `current-${parcel.id}`,
+          lat: parcel.currentLocation.lat,
+          lng: parcel.currentLocation.lng,
+          title: `Current Location`,
+          type: 'driver',
+          status: parcel.status
+        });
+      }
+      // Add all route points as 'route' type markers
+      if (parcel.route && Array.isArray(parcel.route)) {
+        parcel.route.forEach((point, idx) => {
+          locations.push({
+            id: `route-${parcel.id}-${idx}`,
+            lat: point.lat,
+            lng: point.lng,
+            title: `Route Point ${idx + 1}`,
+            type: 'route',
+            status: parcel.status
+          });
+        });
+      }
       return locations;
     });
 
@@ -165,6 +232,11 @@ export class MapView implements OnInit, AfterViewInit, OnDestroy, OnChanges {
       const marker = this.createMarker(location);
       this.markers.push(marker);
     });
+    // Draw route polyline if available
+    if (this.parcels.length && this.parcels[0].route && this.parcels[0].route.length > 1) {
+      const latlngs = this.parcels[0].route.map(p => [p.lat, p.lng]) as [number, number][];
+      L.polyline(latlngs, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(this.map);
+    }
   }
 
   private createMarker(location: DeliveryLocation): L.Marker {

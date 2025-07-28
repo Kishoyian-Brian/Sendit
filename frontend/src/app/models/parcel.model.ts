@@ -11,6 +11,8 @@ export interface Parcel {
   recipientPhone: string;
   recipientId?: string;
   deliveryAddress: string;
+  pickupLocation?: { lat: number; lng: number };
+  deliveryLocation?: { lat: number; lng: number };
   weight: string;
   description: string;
   driver: string;
@@ -20,4 +22,5 @@ export interface Parcel {
   deliveredAt?: string;
   eta?: string;
   currentLocation?: { lat: number; lng: number };
+  route?: { lat: number; lng: number; timestamp: string }[];
 }

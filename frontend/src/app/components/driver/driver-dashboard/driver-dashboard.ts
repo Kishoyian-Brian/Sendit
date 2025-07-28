@@ -12,7 +12,7 @@ import { Parcel } from '../../../models/parcel.model';
 @Component({
   selector: 'app-driver-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, Navbar, Footer, Toast, MapView],
+  imports: [CommonModule, FormsModule, Navbar, Toast, MapView],
   templateUrl: './driver-dashboard.html',
   styles: ``
 })

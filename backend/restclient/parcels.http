@@ -1,0 +1,72 @@
+### Parcel Management Tests
+
+### 1. Create a new parcel (requires authentication)
+POST http://localhost:3000/parcel
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "recipientName": "Alice Johnson",
+  "recipientEmail": "alice@example.com",
+  "recipientPhone": "+1234567890",
+  "pickupAddress": "123 Main St, City, State 12345",
+  "deliveryAddress": "456 Oak Ave, City, State 12345",
+  "weight": "2.5kg",
+  "description": "Fragile electronics package"
+}
+
+### 2. Get all parcels (admin only)
+GET http://localhost:3000/parcel
+Authorization: Bearer {{adminToken}}
+
+### 3. Get parcels by user (authenticated user)
+GET http://localhost:3000/parcel/user
+Authorization: Bearer {{authToken}}
+
+### 4. Get parcels by driver (driver only)
+GET http://localhost:3000/parcel/driver
+Authorization: Bearer {{driverToken}}
+
+### 5. Get parcel by ID
+GET http://localhost:3000/parcel/1
+Authorization: Bearer {{authToken}}
+
+### 6. Update parcel status
+PATCH http://localhost:3000/parcel/1/status
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "status": "IN_TRANSIT"
+}
+
+### 7. Assign driver to parcel (admin only)
+PATCH http://localhost:3000/parcel/1/assign-driver
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "driverId": 1
+}
+
+### 8. Get parcel statistics (admin only)
+GET http://localhost:3000/parcel/stats
+Authorization: Bearer {{adminToken}}
+
+### 9. Public tracking (no auth required)
+GET http://localhost:3000/parcel/track/{{trackingNumber}}
+
+### 10. Create another parcel for testing
+POST http://localhost:3000/parcel
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "recipientName": "Bob Wilson",
+  "recipientEmail": "bob@example.com",
+  "recipientPhone": "+1987654321",
+  "pickupAddress": "789 Pine St, City, State 12345",
+  "deliveryAddress": "321 Elm St, City, State 12345",
+  "weight": "1.2kg",
+  "description": "Documents package"
+} 

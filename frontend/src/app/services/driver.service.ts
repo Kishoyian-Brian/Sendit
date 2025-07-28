@@ -70,12 +70,14 @@ export class DriverService {
     return driver;
   }
 
-  updateParcelLocation(parcelId: string, newLocation: { lat: number, lng: number }): void {
-    const allParcels: Parcel[] = JSON.parse(localStorage.getItem('admin_parcels') || '[]');
-    const parcelIndex = allParcels.findIndex(p => p.id === parcelId);
-    if (parcelIndex !== -1) {
-      allParcels[parcelIndex].currentLocation = newLocation;
-      localStorage.setItem('admin_parcels', JSON.stringify(allParcels));
+  updateParcelLocation(parcelId: string, newLocation: { lat: number, lng: number }) {
+    const parcels: Parcel[] = JSON.parse(localStorage.getItem('admin_parcels') || '[]');
+    const parcel = parcels.find(p => p.id === parcelId);
+    if (parcel) {
+      parcel.currentLocation = newLocation;
+      if (!parcel.route) parcel.route = [];
+      parcel.route.push({ ...newLocation, timestamp: new Date().toISOString() });
+      localStorage.setItem('admin_parcels', JSON.stringify(parcels));
     }
   }
 } 

@@ -1,0 +1,69 @@
+### WebSocket Tests for Real-time Tracking
+### Note: These are examples of WebSocket connections
+### You'll need to use a WebSocket client or browser to test these
+
+### WebSocket Connection URL
+### ws://localhost:3000
+
+### Join Tracking Room
+### Event: joinTracking
+### Payload: { "trackingNumber": "TRK123456789" }
+### Headers: { "Authorization": "Bearer {{authToken}}" }
+
+### Listen for Events:
+### - locationUpdate: Real-time location changes
+### - statusUpdate: Parcel status changes  
+### - etaUpdate: Estimated arrival time updates
+
+### Example WebSocket Messages:
+
+### Join tracking room
+{
+  "event": "joinTracking",
+  "data": {
+    "trackingNumber": "{{trackingNumber}}"
+  }
+}
+
+### Leave tracking room
+{
+  "event": "leaveTracking",
+  "data": {
+    "trackingNumber": "{{trackingNumber}}"
+  }
+}
+
+### Expected Response Events:
+
+### Location Update
+{
+  "event": "locationUpdate",
+  "data": {
+    "trackingNumber": "TRK123456789",
+    "lat": 40.7128,
+    "lng": -74.0060,
+    "address": "123 Main St, New York, NY",
+    "timestamp": "2025-07-27T20:52:36.000Z"
+  }
+}
+
+### Status Update
+{
+  "event": "statusUpdate", 
+  "data": {
+    "trackingNumber": "TRK123456789",
+    "status": "IN_TRANSIT",
+    "timestamp": "2025-07-27T20:52:36.000Z"
+  }
+}
+
+### ETA Update
+{
+  "event": "etaUpdate",
+  "data": {
+    "trackingNumber": "TRK123456789",
+    "estimatedArrival": "2025-07-28T15:00:00.000Z",
+    "distance": 2.5,
+    "duration": 15
+  }
+} 

@@ -1,0 +1,44 @@
+### Driver Management Tests
+
+### 1. Update parcel location (driver only)
+PATCH http://localhost:3000/driver/parcels/1/location
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "lat": 40.7128,
+  "lng": -74.0060
+}
+
+### 2. Update location with different coordinates
+PATCH http://localhost:3000/driver/parcels/1/location
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "lat": 40.7589,
+  "lng": -73.9851
+}
+
+### 3. Update location for second parcel
+PATCH http://localhost:3000/driver/parcels/2/location
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "lat": 40.7505,
+  "lng": -73.9934
+}
+
+### 4. Get driver's assigned parcels
+GET http://localhost:3000/parcel/driver
+Authorization: Bearer {{driverToken}}
+
+### 5. Update parcel status to delivered
+PATCH http://localhost:3000/parcel/1/status
+Content-Type: application/json
+Authorization: Bearer {{driverToken}}
+
+{
+  "status": "DELIVERED"
+} 

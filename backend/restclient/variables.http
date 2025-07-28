@@ -1,0 +1,14 @@
+### Environment Variables for REST Client
+### This file stores variables that will be used across all test files
+
+@baseUrl = http://localhost:3000
+@authToken = 
+@adminToken = 
+@driverToken = 
+@trackingNumber = 
+
+### Instructions:
+### 1. Run the auth.http tests first to get tokens
+### 2. Copy the accessToken from the response to the appropriate variable above
+### 3. Copy the trackingNumber from parcel creation responses
+### 4. Use these variables in other test files with {{variableName}} 

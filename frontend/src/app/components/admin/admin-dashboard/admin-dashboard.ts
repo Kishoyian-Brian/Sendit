@@ -55,6 +55,29 @@ export class AdminDashboard implements OnInit {
   packageWeight = '';
   packageDescription = '';
   driverId = '';
+  pickupLocation: { lat: number; lng: number } | null = null;
+  deliveryLocation: { lat: number; lng: number } | null = null;
+  showLocationMapModal: boolean = false;
+  locationTypeBeingSet: 'pickup' | 'delivery' | null = null;
+
+  openLocationMap(type: 'pickup' | 'delivery') {
+    this.locationTypeBeingSet = type;
+    this.showLocationMapModal = true;
+  }
+
+  closeLocationMap() {
+    this.showLocationMapModal = false;
+    this.locationTypeBeingSet = null;
+  }
+
+  onMapLocationSelected(location: { lat: number; lng: number }) {
+    if (this.locationTypeBeingSet === 'pickup') {
+      this.pickupLocation = location;
+    } else if (this.locationTypeBeingSet === 'delivery') {
+      this.deliveryLocation = location;
+    }
+    this.closeLocationMap();
+  }
 
   constructor(private adminService: AdminService) {}
 
@@ -118,6 +141,8 @@ export class AdminDashboard implements OnInit {
 
   closeCreateParcelModal() {
     this.showCreateParcelModal = false;
+    this.pickupLocation = null;
+    this.deliveryLocation = null;
   }
 
   async createOrder() {
@@ -138,11 +163,13 @@ export class AdminDashboard implements OnInit {
       senderPhone: this.senderPhone,
       senderId: this.senderEmail,
       pickupAddress: this.pickupAddress,
+      pickupLocation: this.pickupLocation,
       recipient: this.receiverName,
       recipientEmail: this.receiverEmail,
       recipientPhone: this.receiverPhone,
       recipientId: this.receiverEmail,
       deliveryAddress: this.deliveryAddress,
+      deliveryLocation: this.deliveryLocation,
       weight: this.packageWeight,
       description: this.packageDescription,
       driver: driver ? (driver.firstName + ' ' + driver.lastName) : '',

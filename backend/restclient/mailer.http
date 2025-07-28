@@ -1,0 +1,80 @@
+### Email System Tests
+
+### 1. Send welcome email (admin only)
+POST http://localhost:3000/mailer/welcome
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "test@example.com",
+  "name": "Test User",
+  "email": "test@example.com",
+  "role": "USER",
+  "loginUrl": "http://localhost:4200/login"
+}
+
+### 2. Send forgot password email (admin only)
+POST http://localhost:3000/mailer/forgot-password
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "test@example.com",
+  "name": "Test User",
+  "resetUrl": "http://localhost:4200/reset-password?token=abc123",
+  "expiryTime": "15"
+}
+
+### 3. Send parcel created email (admin only)
+POST http://localhost:3000/mailer/parcel-created
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "recipient@example.com",
+  "name": "Alice Johnson",
+  "trackingNumber": "TRK123456789",
+  "pickupAddress": "123 Main St, City, State 12345",
+  "deliveryAddress": "456 Oak Ave, City, State 12345"
+}
+
+### 4. Send status update email (admin only)
+POST http://localhost:3000/mailer/status-update
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "to": "recipient@example.com",
+  "name": "Alice Johnson",
+  "trackingNumber": "TRK123456789",
+  "status": "IN_TRANSIT",
+  "estimatedDelivery": "2025-07-28T15:00:00Z"
+}
+
+### 5. Test email endpoint (admin only)
+GET http://localhost:3000/mailer/test/test@example.com
+Authorization: Bearer {{adminToken}}
+
+### 6. Send bulk emails (admin only)
+POST http://localhost:3000/mailer/bulk
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "emails": [
+    {
+      "to": "user1@example.com",
+      "name": "User One",
+      "email": "user1@example.com",
+      "role": "USER",
+      "loginUrl": "http://localhost:4200/login"
+    },
+    {
+      "to": "user2@example.com",
+      "name": "User Two",
+      "email": "user2@example.com",
+      "role": "USER",
+      "loginUrl": "http://localhost:4200/login"
+    }
+  ]
+} 

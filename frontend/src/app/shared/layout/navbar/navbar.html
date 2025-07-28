@@ -1,10 +1,10 @@
-<nav class="w-full h-20 bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center px-8 justify-between z-50 relative">
+<nav class="fixed top-0 left-0 w-full h-20 bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] flex items-center px-8 justify-between z-50">
   <a routerLink="/" class="w-36 h-6 flex items-center text-rose-700 text-3xl font-bold font-['Inter'] cursor-pointer hover:text-rose-900 transition">SENDIT</a>
   <div *ngIf="dashboardType" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-red-700 select-none pointer-events-none">
     {{ dashboardType === 'admin' ? 'Admin Dashboard' : (dashboardType === 'driver' ? 'Driver Dashboard' : '') }}
   </div>
   <div *ngIf="!dashboardType" class="flex gap-8 items-center">
-    <a [routerLink]="'/'" class="w-20 h-6 flex items-center text-black text-xl font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">HOME</a>
+    <a [routerLink]="'/'" (click)="scrollToHero($event)" class="w-20 h-6 flex items-center text-black text-xl font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">HOME</a>
     <a href="#about-us" (click)="scrollToAbout($event)" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">ABOUT</a>
     <a href="#contact-us" (click)="scrollToContact($event)" class="w-24 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">CONTACT</a>
     <a *ngIf="isLoggedIn" (click)="goToParcel()" class="w-28 h-6 flex items-center text-black text-base font-normal font-['Inter'] cursor-pointer hover:text-rose-700 transition">PARCELS</a>
@@ -34,3 +34,5 @@
     </div>
   </div>
 </nav>
+<!-- Spacer to prevent content from being hidden behind the fixed navbar -->
+<div class="h-20"></div>

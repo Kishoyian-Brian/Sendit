@@ -1,0 +1,56 @@
+### Authentication Tests
+
+### 1. Register a new user
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### 2. Login with the registered user
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### 3. Login with admin (if exists)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sendit.com",
+  "password": "admin123"
+}
+
+### 4. Login with driver (if exists)
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "driver@sendit.com",
+  "password": "driver123"
+}
+
+### 5. Forgot password
+POST http://localhost:3000/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com"
+}
+
+### 6. Register another user for testing
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "password": "password123"
+} 
