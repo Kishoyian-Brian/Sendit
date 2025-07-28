@@ -1,36 +1,34 @@
 import { Module } from '@nestjs/common';
-import { MailerModule as NestMailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
+import { AppMailerService } from './mailer.service';
 import { join } from 'path';
-import { MailerService } from './mailer.service';
-import { MailerController } from './mailer.controller';
 
 @Module({
   imports: [
-    NestMailerModule.forRoot({
+    MailerModule.forRoot({
       transport: {
         host: process.env.SMTP_HOST || 'smtp.gmail.com',
         port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: process.env.SMTP_USER || '',
+          pass: process.env.SMTP_PASS || '',
         },
       },
       defaults: {
-        from: `"SendIt" <${process.env.SMTP_USER}>`,
+        from: `"SendIt" <${process.env.SMTP_USER || 'noreply@sendit.com'}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),
-        adapter: new HandlebarsAdapter(),
+        adapter: new EjsAdapter(),
         options: {
-          strict: true,
+          strict: false,
         },
       },
     }),
   ],
-  providers: [MailerService],
-  controllers: [MailerController],
-  exports: [MailerService],
+  providers: [AppMailerService],
+  exports: [AppMailerService],
 })
-export class MailerModule {}
+export class AppMailerModule {} 

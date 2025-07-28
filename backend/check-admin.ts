@@ -1,6 +1,24 @@
 import { PrismaClient } from './generated/prisma';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+async function createAdminIfNotExists() {
+  const email = 'kishoyianbrianmwangi@gmail.com';
+  const name = 'Brian Mwangi';
+  const password = 'brian123';
+
+  const existing = await prisma.admin.findUnique({ where: { email } });
+  if (existing) {
+    console.log('Admin already exists:', email);
+    return;
+  }
+  const hashed = await bcrypt.hash(password, 10);
+  const admin = await prisma.admin.create({
+    data: { email, name, password: hashed },
+  });
+  console.log('Admin created:', admin);
+}
 
 async function checkAdmin() {
   try {
@@ -34,4 +52,4 @@ async function checkAdmin() {
   }
 }
 
-checkAdmin(); 
+createAdminIfNotExists().then(() => checkAdmin()); 

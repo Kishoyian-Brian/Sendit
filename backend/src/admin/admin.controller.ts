@@ -2,8 +2,6 @@ import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@n
 import { AdminService } from './admin.service';
 import { CreateParcelDto } from './dto/create-parcel.dto';
 import { UpdateParcelDto } from './dto/update-parcel.dto';
-import { CreateDriverDto } from './dto/create-driver.dto';
-import { UpdateDriverDto } from './dto/update-driver.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RoleGuard } from '../auth/guards/role.guards';
 import { Roles } from '../auth/decorators/role.decorator';
@@ -39,21 +37,6 @@ export class AdminController {
   @Get('drivers')
   getDrivers() {
     return this.adminService.getDrivers();
-  }
-
-  @Post('drivers')
-  createDriver(@Body() dto: CreateDriverDto) {
-    return this.adminService.createDriver(dto);
-  }
-
-  @Patch('drivers/:id')
-  updateDriver(@Param('id') id: string, @Body() update: UpdateDriverDto) {
-    return this.adminService.updateDriver(id, update);
-  }
-
-  @Delete('drivers/:id')
-  deleteDriver(@Param('id') id: string) {
-    return this.adminService.deleteDriver(id);
   }
 
   // Stats

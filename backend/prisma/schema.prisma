@@ -21,19 +21,7 @@ model User {
   phone     String?
   role      Role     @default(USER)
   parcels   Parcel[] @relation("UserParcels")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Driver {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  phone     String?
-  vehicle   String?
-  status    String   @default("inactive") // active, on_delivery, etc.
-  parcels   Parcel[] @relation("DriverParcels")
+  driverParcels Parcel[] @relation("DriverParcels")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -60,7 +48,7 @@ model Parcel {
   deliveryAddress   String
   deliveryLocation  String?   // e.g., "Westlands, Nairobi, Kenya"
   driverId          Int?
-  driver            Driver?   @relation("DriverParcels", fields: [driverId], references: [id])
+  driver            User?     @relation("DriverParcels", fields: [driverId], references: [id])
   status            String    @default("pending") // pending, in_transit, delivered, etc.
   currentLat        Float?
   currentLng        Float?

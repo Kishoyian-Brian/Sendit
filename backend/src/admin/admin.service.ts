@@ -4,10 +4,13 @@ import { CreateParcelDto } from './dto/create-parcel.dto';
 import { UpdateParcelDto } from './dto/update-parcel.dto';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { AppMailerService } from '../mailer/mailer.service';
 
 @Injectable()
 export class AdminService {
   private prisma = new PrismaClient();
+
+  constructor(private mailerService: AppMailerService) {}
 
   // Parcels
   async getParcels() {
@@ -29,9 +32,73 @@ export class AdminService {
         throw new BadRequestException('Tracking number already exists');
       }
 
-      return await this.prisma.parcel.create({ 
-        data: { ...dto, trackingNumber }
+      // Get sender details
+      const sender = await this.prisma.user.findUnique({
+        where: { id: dto.senderId },
+        select: { id: true, name: true, email: true }
       });
+
+      if (!sender) {
+        throw new BadRequestException('Sender not found');
+      }
+
+      // Validate driver exists and is actually a driver
+      const driver = await this.prisma.user.findFirst({
+        where: { id: dto.driverId, role: 'DRIVER' },
+        select: { id: true, name: true, email: true }
+      });
+
+      if (!driver) {
+        throw new BadRequestException('Driver not found or user is not a driver');
+      }
+
+      // Create the parcel
+      const parcel = await this.prisma.parcel.create({ 
+        data: { ...dto, trackingNumber },
+        include: {
+          sender: { select: { id: true, name: true, email: true } }
+        }
+      });
+
+      // Send email notifications
+      try {
+        // Send email to sender
+        await this.mailerService.sendParcelCreatedEmail({
+          toEmail: sender.email,
+          toName: sender.name,
+          trackingNumber: parcel.trackingNumber,
+          recipientName: parcel.recipientName,
+          recipientEmail: parcel.recipientEmail,
+          pickupAddress: parcel.pickupAddress,
+          deliveryAddress: parcel.deliveryAddress,
+          weight: parcel.weight || 'Not specified',
+          description: parcel.description || 'No description provided',
+          createdAt: parcel.createdAt.toLocaleDateString(),
+          isSender: true
+        });
+
+        // Send email to receiver
+        await this.mailerService.sendParcelCreatedEmail({
+          toEmail: parcel.recipientEmail,
+          toName: parcel.recipientName,
+          trackingNumber: parcel.trackingNumber,
+          senderName: sender.name,
+          senderEmail: sender.email,
+          pickupAddress: parcel.pickupAddress,
+          deliveryAddress: parcel.deliveryAddress,
+          weight: parcel.weight || 'Not specified',
+          description: parcel.description || 'No description provided',
+          createdAt: parcel.createdAt.toLocaleDateString(),
+          isSender: false
+        });
+
+        console.log(`Parcel creation emails sent for tracking number: ${parcel.trackingNumber}`);
+      } catch (emailError) {
+        console.error('Failed to send parcel creation emails:', emailError);
+        // Don't fail the parcel creation if emails fail
+      }
+
+      return parcel;
     } catch (e) {
       throw new BadRequestException(e.message);
     }
@@ -53,28 +120,17 @@ export class AdminService {
 
   // Drivers
   async getDrivers() {
-    return this.prisma.driver.findMany();
-  }
-  async createDriver(dto: CreateDriverDto) {
-    try {
-      return await this.prisma.driver.create({ data: dto });
-    } catch (e) {
-      throw new BadRequestException(e.message);
-    }
-  }
-  async updateDriver(id: string, update: UpdateDriverDto) {
-    try {
-      return await this.prisma.driver.update({ where: { id: Number(id) }, data: update });
-    } catch (e) {
-      throw new NotFoundException('Driver not found');
-    }
-  }
-  async deleteDriver(id: string) {
-    try {
-      return await this.prisma.driver.delete({ where: { id: Number(id) } });
-    } catch (e) {
-      throw new NotFoundException('Driver not found');
-    }
+    return this.prisma.user.findMany({
+      where: { role: 'DRIVER' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        createdAt: true
+      }
+    });
   }
 
   // Stats
@@ -84,7 +140,7 @@ export class AdminService {
       this.prisma.parcel.count({ where: { status: 'in_transit' } }),
       this.prisma.parcel.count({ where: { status: 'delivered' } }),
       this.prisma.parcel.count({ where: { status: 'pending' } }),
-      this.prisma.driver.count({ where: { status: 'active' } })
+      this.prisma.user.count({ where: { role: 'DRIVER' } })
     ]);
     return { totalParcels, inTransit, delivered, pending, activeDrivers };
   }

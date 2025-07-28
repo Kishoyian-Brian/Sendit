@@ -161,15 +161,12 @@ export class ParcelService {
 
     // Handle driver assignment
     if (dto.driverId && dto.driverId !== parcel.driverId) {
-      // Verify driver exists and is active
-      const driver = await this.prisma.driver.findUnique({
-        where: { id: dto.driverId }
+      // Verify driver exists and is a driver
+      const driver = await this.prisma.user.findFirst({
+        where: { id: dto.driverId, role: 'DRIVER' }
       });
       if (!driver) {
-        throw new BadRequestException('Driver not found');
-      }
-      if (driver.status !== 'active') {
-        throw new BadRequestException('Driver is not active');
+        throw new BadRequestException('Driver not found or user is not a driver');
       }
 
       // Auto-assign status to ASSIGNED when driver is assigned
@@ -267,14 +264,11 @@ export class ParcelService {
     }
 
     // Verify driver exists and is active
-    const driver = await this.prisma.driver.findUnique({
-      where: { id: driverId }
+    const driver = await this.prisma.user.findFirst({
+      where: { id: driverId, role: 'DRIVER' }
     });
     if (!driver) {
-      throw new BadRequestException('Driver not found');
-    }
-    if (driver.status !== 'active') {
-      throw new BadRequestException('Driver is not active');
+      throw new BadRequestException('Driver not found or user is not a driver');
     }
 
     // Update parcel with driver assignment and status change

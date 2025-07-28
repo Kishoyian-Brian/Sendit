@@ -1,10 +1,14 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { MailerService } from '../mailer/mailer.service';
+import { AppMailerService } from '../mailer/mailer.service';
 
 interface UserWithRole {
   id: number;
@@ -19,13 +23,13 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService
+    private readonly mailerService: AppMailerService,
   ) {}
 
   async register(dto: RegisterDto) {
     // Check if user already exists
     const existingUser = await this.prisma.user.findFirst({
-      where: { email: dto.email }
+      where: { email: dto.email },
     });
 
     if (existingUser) {
@@ -45,18 +49,35 @@ export class AuthService {
       },
     });
 
-    // Send welcome email
+    // Send welcome email to the new user
     try {
       await this.mailerService.sendWelcomeEmail({
-        to: user.email,
         name: user.name,
         email: user.email,
         role: user.role,
+        createdAt: user.createdAt.toLocaleDateString(),
         loginUrl: `${process.env.FRONTEND_URL || 'http://localhost:4200'}/login`,
       });
     } catch (error) {
       console.error('Failed to send welcome email:', error);
-      // Don't fail registration if email fails
+      // Don't throw - we don't want email failures to break registration
+    }
+
+    // Send notification email to admin
+    try {
+      // Get admin email from environment or use a default
+      const adminEmail = process.env.ADMIN_EMAIL || 'kishoyianbrianmwangi@gmail.com';
+      
+      await this.mailerService.sendAdminUserRegisteredEmail({
+        adminEmail: adminEmail,
+        newUserName: user.name,
+        newUserEmail: user.email,
+        newUserRole: user.role,
+        registrationDate: user.createdAt.toLocaleDateString(),
+      });
+    } catch (error) {
+      console.error('Failed to send admin notification email:', error);
+      // Don't throw - we don't want email failures to break registration
     }
 
     // Generate JWT token
@@ -80,68 +101,8 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    // Check admin first
-    let user = await this.prisma.admin.findFirst({
-      where: { email: dto.email }
-    });
-
-    if (user) {
-      const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const payload = {
-        userId: user.id,
-        email: user.email,
-        role: 'ADMIN',
-      };
-
-      const accessToken = this.jwtService.sign(payload);
-
-      return {
-        accessToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: 'ADMIN',
-        },
-      };
-    }
-
-    // Check driver
-    user = await this.prisma.driver.findFirst({
-      where: { email: dto.email }
-    });
-
-    if (user) {
-      const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const payload = {
-        userId: user.id,
-        email: user.email,
-        role: 'DRIVER',
-      };
-
-      const accessToken = this.jwtService.sign(payload);
-
-      return {
-        accessToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: 'DRIVER',
-        },
-      };
-    }
-
-    // Check regular user
-    const regularUser = await this.prisma.user.findFirst({
+    // Check regular user (including drivers)
+    const user = await this.prisma.user.findFirst({
       where: { email: dto.email },
       select: {
         id: true,
@@ -149,22 +110,25 @@ export class AuthService {
         password: true,
         name: true,
         role: true,
-      }
+      },
     });
 
-    if (!regularUser) {
+    if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, regularUser.password);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const payload = {
-      userId: regularUser.id,
-      email: regularUser.email,
-      role: regularUser.role,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -172,10 +136,10 @@ export class AuthService {
     return {
       accessToken,
       user: {
-        id: regularUser.id,
-        email: regularUser.email,
-        name: regularUser.name,
-        role: regularUser.role,
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
       },
     };
   }
@@ -183,7 +147,7 @@ export class AuthService {
   async forgotPassword(email: string) {
     // Find user by email
     let userWithRole: UserWithRole | null = null;
-    
+
     const regularUser = await this.prisma.user.findFirst({ where: { email } });
     if (regularUser) {
       userWithRole = {
@@ -207,41 +171,24 @@ export class AuthService {
     }
 
     if (!userWithRole) {
-      const driver = await this.prisma.driver.findFirst({ where: { email } });
-      if (driver) {
-        userWithRole = {
-          id: driver.id,
-          email: driver.email,
-          name: driver.name,
-          role: 'DRIVER',
-        };
-      }
-    }
-
-    if (!userWithRole) {
       // Don't reveal if user exists or not for security
-      return { message: 'If an account exists, a password reset email has been sent.' };
+      return {
+        message: 'If an account exists, a password reset email has been sent.',
+      };
     }
 
     // Generate reset token (in production, use a proper token system)
     const resetToken = this.jwtService.sign(
       { userId: userWithRole.id, email: userWithRole.email },
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
-
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/reset-password?token=${resetToken}`;
 
     // Send password reset email
     try {
-      await this.mailerService.sendForgotPasswordEmail({
-        to: userWithRole.email,
-        name: userWithRole.name,
-        resetUrl,
-        expiryTime: '15',
-      });
+      await this.mailerService.sendForgotPasswordEmail(email, resetToken);
     } catch (error) {
       console.error('Failed to send password reset email:', error);
-      throw new Error('Failed to send password reset email');
+      // Don't throw - we don't want email failures to break the process
     }
 
     return { message: 'Password reset email sent successfully' };

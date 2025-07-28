@@ -5,9 +5,9 @@ POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "name": "John Doe",
-  "email": "john.doe@example.com",
-  "password": "password123"
+  "name": "Ben Doe",
+  "email": "dzsoilasoilasoila@gmail.com",
+  "password": "password123",
 }
 
 ### 2. Login with the registered user
@@ -15,7 +15,7 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "john.doe@example.com",
+  "email": "maxmillianmururi@gmail.com",
   "password": "password123"
 }
 
@@ -24,7 +24,7 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@sendit.com",
+  "email": "brianmwasbayo@gmail.com",
   "password": "admin123"
 }
 
@@ -50,7 +50,7 @@ POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "name": "Jane Smith",
-  "email": "jane.smith@example.com",
+  "name": "Brian Mwasbayo",
+  "email": "dzsoilasoilasoila.com",
   "password": "password123"
 } 

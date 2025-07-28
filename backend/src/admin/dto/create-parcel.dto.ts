@@ -10,7 +10,7 @@ export class CreateParcelDto {
   @IsOptional() @IsString() pickupLocation?: string;
   @IsString() deliveryAddress: string;
   @IsOptional() @IsString() deliveryLocation?: string;
-  @IsOptional() @IsNumber() driverId?: number;
+  @IsNumber() driverId: number;
   @IsOptional() @IsString() status?: string;
   @IsOptional() @IsNumber() currentLat?: number;
   @IsOptional() @IsNumber() currentLng?: number;

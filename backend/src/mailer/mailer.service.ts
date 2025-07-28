@@ -1,237 +1,160 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { MailerService as NestMailerService } from '@nestjs-modules/mailer';
-import { 
-  SendEmailDto, 
-  SendBulkEmailDto,
-  WelcomeEmailDto,
-  ParcelCreatedEmailDto,
-  StatusUpdateEmailDto,
-  ForgotPasswordEmailDto
-} from './dto/send-email.dto';
+import { Injectable } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+
+export interface WelcomeEmailData {
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  loginUrl: string;
+}
+
+export interface ParcelCreatedEmailData {
+  toEmail: string;
+  toName: string;
+  trackingNumber: string;
+  recipientName?: string;
+  recipientEmail?: string;
+  senderName?: string;
+  senderEmail?: string;
+  pickupAddress: string;
+  deliveryAddress: string;
+  weight: string;
+  description: string;
+  createdAt: string;
+  isSender: boolean;
+}
+
+export interface StatusUpdateEmailData {
+  recipientName: string;
+  recipientEmail: string;
+  trackingNumber: string;
+  status: string;
+  currentLocation: string;
+  estimatedDelivery: string;
+}
+
+export interface AdminUserRegisteredEmailData {
+  adminEmail: string;
+  newUserName: string;
+  newUserEmail: string;
+  newUserRole: string;
+  registrationDate: string;
+}
 
 @Injectable()
-export class MailerService {
-  private readonly logger = new Logger(MailerService.name);
+export class AppMailerService {
+  constructor(private readonly mailerService: MailerService) {}
 
-  constructor(private readonly mailerService: NestMailerService) {}
-
-  /**
-   * Send a generic email using a template
-   */
-  async sendEmail(dto: SendEmailDto): Promise<boolean> {
+  async sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
     try {
       await this.mailerService.sendMail({
-        to: dto.to,
-        subject: dto.subject,
-        template: dto.template,
-        context: dto.context || {},
+        to: data.email,
+        subject: `Welcome to SendIt, ${data.name}!`,
+        template: 'welcome',
+        context: {
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          createdAt: data.createdAt,
+          loginUrl: data.loginUrl,
+        },
       });
-      
-      this.logger.log(`Email sent successfully to ${dto.to}`);
-      return true;
+      console.log(`Welcome email sent to ${data.email}`);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${dto.to}:`, error);
-      return false;
+      console.error('Failed to send welcome email:', error);
+      // Don't throw - we don't want email failures to break registration
     }
   }
 
-  /**
-   * Send bulk emails to multiple recipients
-   */
-  async sendBulkEmail(dto: SendBulkEmailDto): Promise<{ success: number; failed: number }> {
-    let success = 0;
-    let failed = 0;
-
-    for (const email of dto.to) {
-      try {
-        await this.mailerService.sendMail({
-          to: email,
-          subject: dto.subject,
-          template: dto.template,
-          context: dto.context || {},
-        });
-        success++;
-        this.logger.log(`Bulk email sent successfully to ${email}`);
-      } catch (error) {
-        failed++;
-        this.logger.error(`Failed to send bulk email to ${email}:`, error);
-      }
+  async sendAdminUserRegisteredEmail(data: AdminUserRegisteredEmailData): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: data.adminEmail,
+        subject: `New User Registration - ${data.newUserName}`,
+        template: 'admin-user-registered',
+        context: {
+          adminEmail: data.adminEmail,
+          newUserName: data.newUserName,
+          newUserEmail: data.newUserEmail,
+          newUserRole: data.newUserRole,
+          registrationDate: data.registrationDate,
+        },
+      });
+      console.log(`Admin notification email sent to ${data.adminEmail}`);
+    } catch (error) {
+      console.error('Failed to send admin notification email:', error);
     }
-
-    return { success, failed };
   }
 
-  /**
-   * Send welcome email to new users
-   */
-  async sendWelcomeEmail(dto: WelcomeEmailDto): Promise<boolean> {
-    return this.sendEmail({
-      to: dto.to,
-      subject: 'Welcome to SendIt! 🚚',
-      template: 'welcome',
-      context: {
-        name: dto.name,
-        email: dto.email,
-        role: dto.role,
-        loginUrl: dto.loginUrl,
-        createdAt: new Date().toLocaleDateString(),
-      },
-    });
+  async sendParcelCreatedEmail(data: ParcelCreatedEmailData): Promise<void> {
+    try {
+      const subject = data.isSender 
+        ? `Package Created - Tracking #${data.trackingNumber}`
+        : `Package Incoming - Tracking #${data.trackingNumber}`;
+
+      await this.mailerService.sendMail({
+        to: data.toEmail,
+        subject: subject,
+        template: 'parcel-created',
+        context: {
+          toName: data.toName,
+          trackingNumber: data.trackingNumber,
+          recipientName: data.recipientName,
+          recipientEmail: data.recipientEmail,
+          senderName: data.senderName,
+          senderEmail: data.senderEmail,
+          pickupAddress: data.pickupAddress,
+          deliveryAddress: data.deliveryAddress,
+          weight: data.weight,
+          description: data.description,
+          createdAt: data.createdAt,
+          isSender: data.isSender,
+        },
+      });
+      console.log(`Parcel creation email sent to ${data.toEmail}`);
+    } catch (error) {
+      console.error('Failed to send parcel creation email:', error);
+    }
   }
 
-  /**
-   * Send parcel created notification
-   */
-  async sendParcelCreatedEmail(dto: ParcelCreatedEmailDto): Promise<boolean> {
-    return this.sendEmail({
-      to: dto.to,
-      subject: `Parcel Created - Tracking #${dto.trackingNumber}`,
-      template: 'parcel-created',
-      context: {
-        recipientName: dto.recipientName,
-        trackingNumber: dto.trackingNumber,
-        pickupAddress: dto.pickupAddress,
-        deliveryAddress: dto.deliveryAddress,
-        status: dto.status,
-        weight: dto.weight,
-        description: dto.description,
-        trackingUrl: dto.trackingUrl,
-      },
-    });
+  async sendStatusUpdateEmail(data: StatusUpdateEmailData): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: data.recipientEmail,
+        subject: `Package Update - ${data.trackingNumber}`,
+        template: 'status-update',
+        context: {
+          recipientName: data.recipientName,
+          recipientEmail: data.recipientEmail,
+          trackingNumber: data.trackingNumber,
+          status: data.status,
+          currentLocation: data.currentLocation,
+          estimatedDelivery: data.estimatedDelivery,
+        },
+      });
+      console.log(`Status update email sent to ${data.recipientEmail}`);
+    } catch (error) {
+      console.error('Failed to send status update email:', error);
+    }
   }
 
-  /**
-   * Send parcel status update notification
-   */
-  async sendStatusUpdateEmail(dto: StatusUpdateEmailDto): Promise<boolean> {
-    return this.sendEmail({
-      to: dto.to,
-      subject: `Parcel Status Update - ${dto.trackingNumber}`,
-      template: 'status-update',
-      context: {
-        recipientName: dto.recipientName,
-        trackingNumber: dto.trackingNumber,
-        previousStatus: dto.previousStatus,
-        newStatus: dto.newStatus,
-        updatedAt: dto.updatedAt,
-        driverName: dto.driverName,
-        estimatedArrival: dto.estimatedArrival,
-        statusMessage: dto.statusMessage,
-        trackingUrl: dto.trackingUrl,
-      },
-    });
+  async sendForgotPasswordEmail(email: string, resetToken: string): Promise<void> {
+    try {
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/reset-password?token=${resetToken}`;
+      
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Password Reset Request - SendIt',
+        template: 'forgot-password',
+        context: {
+          email,
+          resetUrl,
+        },
+      });
+      console.log(`Password reset email sent to ${email}`);
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+    }
   }
-
-  /**
-   * Send password reset email
-   */
-  async sendForgotPasswordEmail(dto: ForgotPasswordEmailDto): Promise<boolean> {
-    return this.sendEmail({
-      to: dto.to,
-      subject: 'Password Reset Request - SendIt',
-      template: 'forgot-password',
-      context: {
-        name: dto.name,
-        resetUrl: dto.resetUrl,
-        expiryTime: dto.expiryTime,
-      },
-    });
-  }
-
-  /**
-   * Send delivery confirmation email
-   */
-  async sendDeliveryConfirmationEmail(
-    to: string,
-    recipientName: string,
-    trackingNumber: string,
-    deliveredAt: string,
-    driverName: string
-  ): Promise<boolean> {
-    return this.sendEmail({
-      to,
-      subject: `Parcel Delivered! - ${trackingNumber}`,
-      template: 'status-update',
-      context: {
-        recipientName,
-        trackingNumber,
-        previousStatus: 'in_transit',
-        newStatus: 'delivered',
-        updatedAt: deliveredAt,
-        driverName,
-        statusMessage: 'Your parcel has been successfully delivered!',
-        trackingUrl: `${process.env.FRONTEND_URL}/track/${trackingNumber}`,
-      },
-    });
-  }
-
-  /**
-   * Send driver assignment notification
-   */
-  async sendDriverAssignmentEmail(
-    to: string,
-    recipientName: string,
-    trackingNumber: string,
-    driverName: string,
-    driverPhone: string
-  ): Promise<boolean> {
-    return this.sendEmail({
-      to,
-      subject: `Driver Assigned - ${trackingNumber}`,
-      template: 'status-update',
-      context: {
-        recipientName,
-        trackingNumber,
-        previousStatus: 'pending',
-        newStatus: 'assigned',
-        updatedAt: new Date().toLocaleString(),
-        driverName,
-        statusMessage: `Your parcel has been assigned to ${driverName}. Contact: ${driverPhone}`,
-        trackingUrl: `${process.env.FRONTEND_URL}/track/${trackingNumber}`,
-      },
-    });
-  }
-
-  /**
-   * Send pickup notification
-   */
-  async sendPickupNotificationEmail(
-    to: string,
-    recipientName: string,
-    trackingNumber: string,
-    pickupTime: string
-  ): Promise<boolean> {
-    return this.sendEmail({
-      to,
-      subject: `Parcel Picked Up - ${trackingNumber}`,
-      template: 'status-update',
-      context: {
-        recipientName,
-        trackingNumber,
-        previousStatus: 'assigned',
-        newStatus: 'in_transit',
-        updatedAt: pickupTime,
-        statusMessage: 'Your parcel has been picked up and is now in transit!',
-        trackingUrl: `${process.env.FRONTEND_URL}/track/${trackingNumber}`,
-      },
-    });
-  }
-
-  /**
-   * Test email functionality
-   */
-  async sendTestEmail(to: string): Promise<boolean> {
-    return this.sendEmail({
-      to,
-      subject: 'SendIt Email Test',
-      template: 'welcome',
-      context: {
-        name: 'Test User',
-        email: to,
-        role: 'USER',
-        loginUrl: process.env.FRONTEND_URL || 'http://localhost:4200',
-        createdAt: new Date().toLocaleDateString(),
-      },
-    });
-  }
-}
+} 
