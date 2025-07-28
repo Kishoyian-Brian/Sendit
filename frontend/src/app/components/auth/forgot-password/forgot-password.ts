@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 import { Toast } from '../../toast/toast/toast';
 
 @Component({
@@ -13,47 +14,100 @@ import { Toast } from '../../toast/toast/toast';
 })
 export class ForgotPassword {
   email = '';
+  otp = '';
   newPassword = '';
+  confirmPassword = '';
+  isLoading = false;
+  currentStep: 'email' | 'otp' | 'password' = 'email';
   @ViewChild('toast') toast!: Toast;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
-  async resetPassword() {
-    if (!this.email || !this.newPassword) {
-      this.toast.show('Please fill in all fields.', 'error');
+  sendOTP() {
+    if (!this.email) {
+      this.toast.show('Please enter your email address.', 'error');
       return;
     }
-    const emailLower = this.email.toLowerCase();
-    let found = false;
-    // Try users
-    let users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIdx = users.findIndex((u: any) => u.email.toLowerCase() === emailLower);
-    if (userIdx !== -1) {
-      users[userIdx].password = this.newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
-      found = true;
+
+    this.isLoading = true;
+    this.authService.forgotPassword(this.email).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.toast.show('OTP sent to your email!', 'success');
+        this.currentStep = 'otp';
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Forgot password error:', error);
+        this.toast.show(error.error?.message || 'Failed to send OTP. Please try again.', 'error');
+      }
+    });
+  }
+
+  verifyOTP() {
+    if (!this.otp) {
+      this.toast.show('Please enter the OTP.', 'error');
+      return;
     }
-    // Try drivers
-    let drivers = JSON.parse(localStorage.getItem('admin_drivers') || '[]');
-    const driverIdx = drivers.findIndex((d: any) => d.email.toLowerCase() === emailLower);
-    if (driverIdx !== -1) {
-      drivers[driverIdx].password = this.newPassword;
-      localStorage.setItem('admin_drivers', JSON.stringify(drivers));
-      found = true;
+
+    this.isLoading = true;
+    this.authService.verifyOTP(this.email, this.otp).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.toast.show('OTP verified successfully!', 'success');
+        this.currentStep = 'password';
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('OTP verification error:', error);
+        this.toast.show(error.error?.message || 'Invalid OTP. Please try again.', 'error');
+      }
+    });
+  }
+
+  resetPassword() {
+    if (!this.newPassword) {
+      this.toast.show('Please enter a new password.', 'error');
+      return;
     }
-    // Try admins
-    let admins = JSON.parse(localStorage.getItem('admins') || '[]');
-    const adminIdx = admins.findIndex((a: any) => a.email.toLowerCase() === emailLower);
-    if (adminIdx !== -1) {
-      admins[adminIdx].password = this.newPassword;
-      localStorage.setItem('admins', JSON.stringify(admins));
-      found = true;
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.toast.show('Passwords do not match.', 'error');
+      return;
     }
-    if (found) {
-      this.toast.show('Password reset successful! Please log in.', 'success');
-      setTimeout(() => this.router.navigate(['/login']), 1500);
-    } else {
-      this.toast.show('Email not found.', 'error');
+
+    if (this.newPassword.length < 6) {
+      this.toast.show('Password must be at least 6 characters long.', 'error');
+      return;
+    }
+
+    this.isLoading = true;
+    this.authService.resetPassword(this.email, this.otp, this.newPassword).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.toast.show('Password reset successfully!', 'success');
+        setTimeout(() => this.router.navigate(['/login']), 1500);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Password reset error:', error);
+        this.toast.show(error.error?.message || 'Failed to reset password. Please try again.', 'error');
+      }
+    });
+  }
+
+  goToLogin() {
+    this.router.navigate(['/login']);
+  }
+
+  goBack() {
+    if (this.currentStep === 'otp') {
+      this.currentStep = 'email';
+      this.otp = '';
+    } else if (this.currentStep === 'password') {
+      this.currentStep = 'otp';
+      this.newPassword = '';
+      this.confirmPassword = '';
     }
   }
 } 

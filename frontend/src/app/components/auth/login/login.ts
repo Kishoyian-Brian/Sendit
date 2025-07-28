@@ -17,26 +17,39 @@ import { Toast } from '../../toast/toast/toast';
 export class Login {
   email = '';
   password = '';
+  isLoading = false;
   @ViewChild('toast') toast!: Toast;
 
   constructor(private router: Router, private authService: AuthService) {}
 
-  async login() {
+  login() {
     if (!this.email || !this.password) {
       this.toast.show('Please fill in all fields.', 'error');
       return;
     }
-    const result = await this.authService.login(this.email, this.password);
-    this.toast.show(result.message, result.success ? 'success' : 'error');
-    if (result.success) {
-      if (result.type === 'admin') {
-        setTimeout(() => this.router.navigate(['/admin-dashboard']), 1500);
-      } else if (result.type === 'driver') {
-        setTimeout(() => this.router.navigate(['/driver-dashboard']), 1500);
-      } else {
-        setTimeout(() => this.router.navigate(['']), 1500);
+
+    this.isLoading = true;
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.toast.show('Login successful!', 'success');
+        
+        // Navigate based on user role
+        const user = this.authService.getCurrentUser();
+        if (user?.role === 'ADMIN') {
+          setTimeout(() => this.router.navigate(['/admin-dashboard']), 1500);
+        } else if (user?.role === 'DRIVER') {
+          setTimeout(() => this.router.navigate(['/driver-dashboard']), 1500);
+        } else {
+          setTimeout(() => this.router.navigate(['/user-dashboard']), 1500);
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Login error:', error);
+        this.toast.show(error.error?.message || 'Login failed. Please try again.', 'error');
       }
-    }
+    });
   }
 
   goToRegister() {

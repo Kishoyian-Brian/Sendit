@@ -49,15 +49,17 @@
             <input type="checkbox" class="accent-[#BA0C2F] input-inner-top-shadow">
             <span class="text-gray-700">Remember me</span>
           </label>
-          <a href="#" class="text-blue-600 hover:underline">Forgot Password</a>
+          <a routerLink="/forgot-password" class="text-blue-600 hover:underline cursor-pointer">Forgot Password</a>
         </div>
 
         <!-- Login Button -->
         <button
           type="submit"
-          class="w-full bg-[#BA0C2F] hover:bg-[#a40a29] transition py-3 font-bold rounded text-white"
+          [disabled]="isLoading"
+          class="w-full bg-[#BA0C2F] hover:bg-[#a40a29] disabled:bg-gray-400 disabled:cursor-not-allowed transition py-3 font-bold rounded text-white"
         >
-          Login
+          <span *ngIf="!isLoading">Login</span>
+          <span *ngIf="isLoading">Logging in...</span>
         </button>
 
         <!-- Create Account Link -->
@@ -72,7 +74,3 @@
 
   <app-footer></app-footer>
 </div>
-
-<p class="text-center mt-4">
-  <a routerLink="/forgot-password" class="text-blue-600 hover:underline">Forgot Password?</a>
-</p>

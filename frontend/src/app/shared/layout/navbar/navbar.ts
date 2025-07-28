@@ -49,7 +49,7 @@ export class Navbar {
   }
 
   logout() {
-    this.authService.logout(this.router);
+    this.authService.logout();
     this.closeAccountDropdown();
   }
 

@@ -3,18 +3,94 @@
 
   <!-- Map View Component -->
   <div class="bg-white rounded-lg shadow-lg overflow-hidden my-8">
-    <div #mapContainer class="map-container"></div>
+    <div #mapContainer class="map-container">
+      <div *ngIf="!dataLoaded" class="flex items-center justify-center h-full">
+        <p class="text-gray-500">Loading map...</p>
+      </div>
+      <div *ngIf="dataLoaded && (!parcels || parcels.length === 0)" class="flex items-center justify-center h-full">
+        <p class="text-gray-500">No parcel data available</p>
+      </div>
+    </div>
   </div>
 
   <!-- Parcel Status Section -->
-  <div *ngIf="parcels && parcels.length > 0" class="max-w-2xl mx-auto my-8 p-6 bg-white rounded-lg shadow flex flex-col items-center">
-    <h2 class="text-xl font-bold mb-2 text-red-700">Parcel Status</h2>
-    <div class="w-full flex flex-col gap-2 text-center">
-      <div><span class="font-semibold">Tracking #:</span> {{parcels[0].trackingNumber}}</div>
-      <div><span class="font-semibold">Status:</span> {{parcels[0].status | titlecase}}</div>
-      <div><span class="font-semibold">Sender:</span> {{parcels[0].sender}}</div>
-      <div><span class="font-semibold">Recipient:</span> {{parcels[0].recipient}}</div>
-      <div><span class="font-semibold">Delivery Address:</span> {{parcels[0].deliveryAddress}}</div>
+  <div *ngIf="parcels && parcels.length > 0" class="max-w-6xl mx-auto my-8 p-6 bg-white rounded-lg shadow">
+    <h2 class="text-xl font-bold mb-4 text-red-700 text-center">Parcel Status</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Tracking #</div>
+        <div class="text-gray-900">{{parcels[0].trackingNumber}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Status</div>
+        <div class="text-gray-900">{{parcels[0].status | titlecase}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Recipient</div>
+        <div class="text-gray-900">{{parcels[0].recipientName}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Recipient Email</div>
+        <div class="text-gray-900">{{parcels[0].recipientEmail}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Pickup Address</div>
+        <div class="text-gray-900">{{parcels[0].pickupAddress}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Delivery Address</div>
+        <div class="text-gray-900">{{parcels[0].deliveryAddress}}</div>
+      </div>
+      <div *ngIf="parcels[0].weight" class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Weight</div>
+        <div class="text-gray-900">{{parcels[0].weight}}</div>
+      </div>
+      <div *ngIf="parcels[0].description" class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Description</div>
+        <div class="text-gray-900">{{parcels[0].description}}</div>
+      </div>
+      <div class="bg-gray-50 p-3 rounded">
+        <div class="font-semibold text-gray-700 text-sm">Created</div>
+        <div class="text-gray-900">{{parcels[0].createdAt | date:'medium'}}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route Information Section -->
+  <div *ngIf="parcels && parcels.length > 0" class="max-w-2xl mx-auto my-4 p-6 bg-blue-50 rounded-lg shadow">
+    <h3 class="text-lg font-bold mb-3 text-blue-700 text-center">Route Information</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="text-center">
+        <div class="text-2xl mb-2">📦</div>
+        <div class="font-semibold text-green-700">Pickup Location</div>
+        <div class="text-sm text-gray-600">{{parcels[0].pickupAddress}}</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl mb-2">🏠</div>
+        <div class="font-semibold text-red-700">Delivery Location</div>
+        <div class="text-sm text-gray-600">{{parcels[0].deliveryAddress}}</div>
+      </div>
+    </div>
+    <div class="mt-4 text-center">
+      <div class="text-sm text-gray-600 mb-2">
+        <span class="font-semibold">Route:</span> 
+        <span class="text-blue-600">📦 Pickup</span> 
+        <span class="mx-2">→</span> 
+        <span class="text-blue-600">🏠 Delivery</span>
+      </div>
+      <div *ngIf="routeLoading" class="text-center py-2">
+        <div class="text-blue-600 text-sm">🔄 Calculating route...</div>
+      </div>
+      <div *ngIf="!routeLoading" class="grid grid-cols-2 gap-4 text-sm">
+        <div class="bg-white p-2 rounded">
+          <div class="font-semibold text-blue-600">Distance</div>
+          <div class="text-gray-700">{{routeDistance.toFixed(1)}} km</div>
+        </div>
+        <div class="bg-white p-2 rounded">
+          <div class="font-semibold text-blue-600">Est. Time</div>
+          <div class="text-gray-700">{{routeDuration}}</div>
+        </div>
+      </div>
     </div>
   </div>
 

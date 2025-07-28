@@ -15,10 +15,8 @@ import { Parcel } from '../../../models/parcel.model';
   styles: []
 })
 export class UserDashboard implements OnInit {
-  sentParcels: Parcel[] = [];
-  receivedParcels: Parcel[] = [];
+  parcels: any[] = [];
   loading = true;
-  currentView: 'sent' | 'received' | 'notifications' = 'sent';
 
   constructor(
     private userService: UserService,
@@ -26,39 +24,19 @@ export class UserDashboard implements OnInit {
     private authService: AuthService
   ) {}
 
-  async ngOnInit() {
-    this.loading = true;
-    this.sentParcels = await this.userService.getSentParcels();
-    this.receivedParcels = await this.userService.getReceivedParcels();
-    this.loading = false;
+  ngOnInit() {
+    this.loadUserData();
   }
 
-  showView(view: 'sent' | 'received' | 'notifications') {
-    this.currentView = view;
+  loadUserData() {
+    this.loading = true;
+    this.userService.getMyParcels().subscribe(parcels => {
+      this.parcels = parcels;
+      this.loading = false;
+    });
   }
 
   logout() {
-    this.authService.logout(this.router);
-  }
-
-  getStepStatus(parcelStatus: 'pending' | 'in_transit' | 'delivered' | 'assigned' | 'pending_pickup', step: 'picked' | 'transit' | 'delivered'): 'complete' | 'active' | 'pending' {
-    const statusOrder: ('pending' | 'in_transit' | 'delivered' | 'assigned' | 'pending_pickup')[] = ['pending', 'assigned', 'pending_pickup', 'in_transit', 'delivered'];
-    const currentStatusIndex = statusOrder.indexOf(parcelStatus);
-
-    if (step === 'picked') {
-      if (currentStatusIndex >= 3) return 'complete'; // In transit or delivered
-      if (currentStatusIndex >= 1) return 'active'; // Assigned or pending_pickup
-      return 'pending';
-    }
-    if (step === 'transit') {
-      if (parcelStatus === 'delivered') return 'complete';
-      if (parcelStatus === 'in_transit') return 'active';
-      return 'pending';
-    }
-    if (step === 'delivered') {
-      if (parcelStatus === 'delivered') return 'complete';
-      return 'pending';
-    }
-    return 'pending';
+    this.authService.logout();
   }
 } 

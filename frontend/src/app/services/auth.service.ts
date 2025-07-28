@@ -1,107 +1,128 @@
 import { Injectable } from '@angular/core';
-import { User } from '../models/user.model';
-import { Driver } from '../models/driver.model';
-import { Admin } from '../models/admin.model';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+
+export interface User {
+  id?: number;
+  email: string;
+  name: string;
+  password?: string;
+  phone?: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  accessToken?: string;
+  user?: User;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  readonly DEFAULT_ADMIN_EMAIL = 'admin@sendit.com';
-  readonly DEFAULT_ADMIN_PASSWORD = 'Admin@123';
-  readonly DEFAULT_DRIVER_EMAIL = 'driver@sendit.com';
-  readonly DEFAULT_DRIVER_PASSWORD = 'Driver@123';
+  private readonly API_URL = 'http://localhost:3000';
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  async registerUser(user: User): Promise<{ success: boolean; message: string }> {
-    const users: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-    if (users.some((u: User) => u.email.toLowerCase() === user.email.toLowerCase())) {
-      return { success: false, message: 'Email already registered.' };
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
+    // Check if user is already logged in
+    const token = localStorage.getItem('accessToken');
+    const userData = localStorage.getItem('userData');
+    if (token && userData) {
+      this.currentUserSubject.next(JSON.parse(userData));
     }
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
-    return { success: true, message: 'User registration successful! Please log in.' };
   }
 
-  async registerDriver(driver: Driver): Promise<{ success: boolean; message: string }> {
-    const drivers: Driver[] = JSON.parse(localStorage.getItem('drivers') || '[]');
-    if (drivers.some((d: Driver) => d.email.toLowerCase() === driver.email.toLowerCase())) {
-      return { success: false, message: 'Email already registered.' };
-    }
-    drivers.push(driver);
-    localStorage.setItem('drivers', JSON.stringify(drivers));
-    return { success: true, message: 'Driver registration successful! Please log in.' };
+  register(user: User): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.API_URL}/auth/register`, user)
+      .pipe(
+        tap(response => {
+          if (response.success && response.accessToken) {
+            this.setAuthData(response.accessToken, response.user!);
+          }
+        })
+      );
   }
 
-  async registerAdmin(admin: Admin): Promise<{ success: boolean; message: string }> {
-    const admins: Admin[] = JSON.parse(localStorage.getItem('admins') || '[]');
-    if (admins.some((a: Admin) => a.email.toLowerCase() === admin.email.toLowerCase())) {
-      return { success: false, message: 'Email already registered.' };
-    }
-    admins.push(admin);
-    localStorage.setItem('admins', JSON.stringify(admins));
-    return { success: true, message: 'Admin registration successful! Please log in.' };
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, { email, password })
+      .pipe(
+        tap(response => {
+          this.setAuthData(response.accessToken, response.user);
+        })
+      );
   }
 
-  async login(email: string, password: string): Promise<{ success: boolean; type?: 'admin' | 'driver' | 'user'; message: string }> {
-    const emailLower = email.toLowerCase();
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/forgot-password`, { email });
+  }
 
-    // Admin
-    const admins: Admin[] = JSON.parse(localStorage.getItem('admins') || '[]');
-    const admin = admins.find((a: Admin) => a.email.toLowerCase() === emailLower && (a as any).password === password);
-    if (admin) {
-      localStorage.setItem('admin_data', JSON.stringify(admin));
-      localStorage.setItem('isAdmin', 'true');
-      return { success: true, type: 'admin', message: 'Admin login successful!' };
-    }
+  verifyOTP(email: string, otp: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/verify-otp`, { email, otp });
+  }
 
-    // Driver (use admin_drivers as canonical source)
-    const drivers: Driver[] = JSON.parse(localStorage.getItem('admin_drivers') || '[]');
-    const driver = drivers.find((d: Driver) => d.email.toLowerCase() === emailLower && (d as any).password === password);
-    if (driver) {
-      localStorage.setItem('driver_data', JSON.stringify(driver));
-      localStorage.setItem('isDriver', 'true');
-      return { success: true, type: 'driver', message: 'Driver login successful!' };
-    }
+  resetPassword(email: string, otp: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/reset-password`, { email, otp, newPassword });
+  }
 
-    // User
-    const users: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find((u: User) => u.email.toLowerCase() === emailLower && (u as any).password === password);
-    if (user) {
-      localStorage.setItem('loggedIn', 'true');
-      localStorage.setItem('isAdmin', 'false');
-      localStorage.setItem('isDriver', 'false');
-      localStorage.setItem('user_data', JSON.stringify(user));
-      return { success: true, type: 'user', message: 'Login successful!' };
-    }
+  private setAuthData(token: string, user: User): void {
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('userData', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
 
-    return { success: false, message: 'Invalid email or password.' };
+  getToken(): string | null {
+    return localStorage.getItem('accessToken');
+  }
+
+  getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('user_data') || !!localStorage.getItem('admin_data') || !!localStorage.getItem('driver_data');
+    return !!this.getToken() && !!this.getCurrentUser();
   }
 
   isAdmin(): boolean {
-    return localStorage.getItem('isAdmin') === 'true';
+    const user = this.getCurrentUser();
+    return user?.role === 'ADMIN';
   }
 
   isDriver(): boolean {
-    return localStorage.getItem('isDriver') === 'true';
+    const user = this.getCurrentUser();
+    return user?.role === 'DRIVER';
   }
 
   isUser(): boolean {
-    const loggedIn = localStorage.getItem('loggedIn') === 'true';
-    const isAdmin = this.isAdmin();
-    const isDriver = this.isDriver();
-    return loggedIn && !isAdmin && !isDriver;
+    const user = this.getCurrentUser();
+    return user?.role === 'USER';
   }
 
-  logout(router: Router) {
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('admin_data');
-    localStorage.removeItem('driver_data');
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('isDriver');
-    router.navigate(['/']);
+  logout(): void {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userData');
+    this.currentUserSubject.next(null);
+    this.router.navigate(['/']);
+  }
+
+  // Helper method to create HTTP headers with auth token
+  getAuthHeaders(): HttpHeaders {
+    const token = this.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
   }
 } 

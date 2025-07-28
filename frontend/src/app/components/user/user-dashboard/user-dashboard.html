@@ -2,9 +2,7 @@
 <div class="min-h-screen bg-gray-100 flex">
   <!-- Sidebar -->
   <aside class="w-64 bg-white shadow-md p-8 flex flex-col gap-6">
-    <button (click)="showView('sent')" [class.text-rose-700]="currentView === 'sent'" class="text-left text-lg font-medium text-gray-700 hover:text-rose-700 transition">Sent Parcels</button>
-    <button (click)="showView('received')" [class.text-rose-700]="currentView === 'received'" class="text-left text-lg font-medium text-gray-700 hover:text-rose-700 transition">Received Parcels</button>
-    <button (click)="showView('notifications')" [class.text-rose-700]="currentView === 'notifications'" class="text-left text-lg font-medium text-gray-700 hover:text-rose-700 transition">Notifications</button>
+    <h2 class="text-xl font-bold text-gray-800 mb-4">My Parcels</h2>
     <button (click)="logout()" class="text-left text-lg font-medium text-gray-700 hover:text-rose-700 transition">Logout</button>
   </aside>
 
@@ -13,49 +11,39 @@
     <div *ngIf="loading" class="text-lg">Loading...</div>
 
     <ng-container *ngIf="!loading">
-      <!-- Sent Parcels View -->
-      <div *ngIf="currentView === 'sent'">
-        <div *ngFor="let parcel of sentParcels" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-xl mb-12">
+      <div class="w-full max-w-4xl">
+        <h1 class="text-2xl font-bold text-gray-800 mb-8">My Parcels</h1>
+        
+        <div *ngFor="let parcel of parcels" class="bg-white rounded-lg shadow-lg p-8 w-full mb-6">
           <div class="mb-4 border-b pb-2">
             <div class="font-bold">Tracking #: {{ parcel.trackingNumber }}</div>
             <div>Status: <span class="font-semibold">{{ parcel.status | titlecase }}</span></div>
           </div>
-          <div class="mb-4 border-b pb-2">
-            <div class="font-semibold mb-2">Timeline Stepper</div>
-            <div class="flex items-center gap-4">
-              <span [class.text-green-600]="getStepStatus(parcel.status, 'picked') === 'complete'">✓ Picked Up</span>
-              <span [class.text-yellow-600]="getStepStatus(parcel.status, 'transit') === 'active'">● In Transit</span>
-              <span [class.text-gray-400]="getStepStatus(parcel.status, 'delivered') === 'pending'">☐ Out for Delivery</span>
+          <div class="mb-4">
+            <div class="font-semibold mb-2">Parcel Details</div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <strong>Pickup Address:</strong> {{ parcel.pickupAddress }}
+              </div>
+              <div>
+                <strong>Delivery Address:</strong> {{ parcel.deliveryAddress }}
+              </div>
+              <div *ngIf="parcel.weight">
+                <strong>Weight:</strong> {{ parcel.weight }}
+              </div>
+              <div *ngIf="parcel.description">
+                <strong>Description:</strong> {{ parcel.description }}
+              </div>
             </div>
           </div>
-          <div>Recipient: {{ parcel.recipient }}</div>
-        </div>
-        <div *ngIf="sentParcels.length === 0">No sent parcels found.</div>
-      </div>
-
-      <!-- Received Parcels View -->
-      <div *ngIf="currentView === 'received'">
-        <div *ngFor="let parcel of receivedParcels" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-xl mb-12">
-          <div class="mb-4 border-b pb-2">
-            <div class="font-bold">Tracking #: {{ parcel.trackingNumber }}</div>
-            <div>Status: <span class="font-semibold">{{ parcel.status | titlecase }}</span></div>
+          <div class="text-sm text-gray-600">
+            Created: {{ parcel.createdAt | date:'medium' }}
           </div>
-          <div class="mb-4 border-b pb-2">
-            <div class="font-semibold mb-2">Timeline Stepper</div>
-            <div class="flex items-center gap-4">
-              <span [class.text-green-600]="getStepStatus(parcel.status, 'picked') === 'complete'">✓ Picked Up</span>
-              <span [class.yello-600]="getStepStatus(parcel.status, 'transit') === 'active'">● In Transit</span>
-              <span [class.text-gray-400]="getStepStatus(parcel.status, 'delivered') === 'pending'">☐ Out for Delivery</span>
-            </div>
-          </div>
-          <div>Sender: {{ parcel.sender }}</div>
         </div>
-        <div *ngIf="receivedParcels.length === 0">No received parcels found.</div>
-      </div>
-
-      <!-- Notifications View -->
-      <div *ngIf="currentView === 'notifications'">
-        <div class="text-lg">Notifications are not yet implemented.</div>
+        
+        <div *ngIf="parcels.length === 0" class="text-center text-gray-500">
+          No parcels found.
+        </div>
       </div>
     </ng-container>
   </main>

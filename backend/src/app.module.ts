@@ -8,6 +8,7 @@ import { DriverModule } from './driver/driver.module';
 import { ParcelModule } from './parcel/parcel.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { AppMailerModule } from './mailer/mailer.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AppMailerModule } from './mailer/mailer.module';
     ParcelModule,
     TrackingModule,
     AppMailerModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService],

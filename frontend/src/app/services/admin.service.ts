@@ -1,98 +1,153 @@
 import { Injectable } from '@angular/core';
-import { Driver } from '../models/driver.model';
-import { User } from '../models/user.model';
-import { Parcel } from '../models/parcel.model';
-import { Admin } from '../models/admin.model';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
+import { map } from 'rxjs/operators';
+
+export interface Parcel {
+  id?: number;
+  trackingNumber: string;
+  senderId: number;
+  sender?: any;
+  recipientName: string;
+  recipientEmail: string;
+  recipientPhone?: string;
+  pickupAddress: string;
+  pickupLocation?: string;
+  deliveryAddress: string;
+  deliveryLocation?: string;
+  driverId?: number;
+  driver?: any;
+  status: string;
+  currentLat?: number;
+  currentLng?: number;
+  currentAddress?: string;
+  weight?: string;
+  description?: string;
+  deliveredAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Driver {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  createdAt: string;
+}
+
+export interface CreateParcelDto {
+  trackingNumber?: string;
+  senderId: number;
+  recipientName: string;
+  recipientEmail: string;
+  recipientPhone?: string;
+  pickupAddress: string;
+  pickupLocation?: string;
+  deliveryAddress: string;
+  deliveryLocation?: string;
+  driverId: number;
+  status?: string;
+  currentLat?: number;
+  currentLng?: number;
+  weight?: string;
+  description?: string;
+}
+
+export interface UpdateParcelDto {
+  trackingNumber?: string;
+  senderId?: number;
+  recipientName?: string;
+  recipientEmail?: string;
+  recipientPhone?: string;
+  pickupAddress?: string;
+  pickupLocation?: string;
+  deliveryAddress?: string;
+  deliveryLocation?: string;
+  driverId?: number;
+  status?: string;
+  currentLat?: number;
+  currentLng?: number;
+  weight?: string;
+  description?: string;
+}
+
+export interface AdminStats {
+  totalParcels: number;
+  inTransit: number;
+  delivered: number;
+  pending: number;
+  activeDrivers: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  // --- PARCELS ---
-  async getParcels(): Promise<Parcel[]> {
-    return JSON.parse(localStorage.getItem('admin_parcels') || '[]') as Parcel[];
+  private readonly API_URL = 'http://localhost:3000';
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
+
+  // Parcel Management
+  getParcels(): Observable<Parcel[]> {
+    return this.http.get<Parcel[]>(`${this.API_URL}/admin/parcels`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  async saveParcels(parcels: Parcel[]): Promise<void> {
-    localStorage.setItem('admin_parcels', JSON.stringify(parcels));
+  createParcel(parcel: CreateParcelDto): Observable<Parcel> {
+    return this.http.post<Parcel>(`${this.API_URL}/admin/parcels`, parcel, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  async updateParcel(id: string, update: Partial<Parcel>): Promise<void> {
-    const parcels = await this.getParcels();
-    const idx = parcels.findIndex((p: Parcel) => p.id === id);
-    if (idx !== -1) {
-      parcels[idx] = { ...parcels[idx], ...update };
-      await this.saveParcels(parcels);
-    }
+  updateParcel(id: string, parcel: UpdateParcelDto): Observable<Parcel> {
+    return this.http.patch<Parcel>(`${this.API_URL}/admin/parcels/${id}`, parcel, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  async assignDriver(parcelId: string, driverName: string): Promise<void> {
-    await this.updateParcel(parcelId, { driver: driverName, status: 'assigned' });
+  deleteParcel(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/admin/parcels/${id}`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  // --- USERS ---
-  async getUsers(): Promise<User[]> {
-    return JSON.parse(localStorage.getItem('users') || '[]') as User[];
+  // Driver Management
+  getDrivers(): Observable<Driver[]> {
+    return this.http.get<Driver[]>(`${this.API_URL}/admin/drivers`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  // --- DRIVERS ---
-  async getDrivers(): Promise<Driver[]> {
-    return JSON.parse(localStorage.getItem('admin_drivers') || '[]') as Driver[];
+  // Statistics
+  getStats(): Observable<AdminStats> {
+    return this.http.get<AdminStats>(`${this.API_URL}/admin/stats`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  async saveDrivers(drivers: Driver[]): Promise<void> {
-    localStorage.setItem('admin_drivers', JSON.stringify(drivers));
+  // User Management
+  getUsers(): Observable<any[]> {
+    return this.http.get<any>(`${this.API_URL}/users`, {
+      headers: this.authService.getAuthHeaders()
+    }).pipe(
+      map(response => response.data?.data || [])
+    );
   }
 
-  async addDriverFromUser(user: User, password: string): Promise<{ success: boolean; message: string }> {
-    const drivers = await this.getDrivers();
-    if (drivers.some((d: Driver) => d.email.toLowerCase() === user.email.toLowerCase())) {
-      return { success: false, message: 'User is already a driver.' };
-    }
-    const newDriver: Driver = {
-      id: 'DRV' + Date.now(),
-      firstName: user.name?.split(' ')[0] || '',
-      lastName: user.name?.split(' ')[1] || '',
-      email: user.email,
-      phone: user.phone || '',
-      password,
-      status: 'active',
-      rating: 0,
-      deliveriesCompleted: 0,
-      currentLocation: undefined,
-      vehicleInfo: { type: '', plateNumber: '', model: '' }
-    };
-    drivers.push(newDriver);
-    await this.saveDrivers(drivers);
-    return { success: true, message: 'Driver added successfully.' };
+  promoteToDriver(userId: string): Observable<any> {
+    return this.http.patch<any>(`${this.API_URL}/users/${userId}/promote-to-driver`, {}, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  async toggleDriverStatus(driverId: string): Promise<void> {
-    const drivers = await this.getDrivers();
-    const idx = drivers.findIndex((d: Driver) => d.id === driverId);
-    if (idx !== -1) {
-      drivers[idx].status = drivers[idx].status === 'active' ? 'inactive' : 'active';
-      await this.saveDrivers(drivers);
-    }
-  }
-
-  // --- STATS ---
-  async getStats(): Promise<any> {
-    // For now, just count from parcels/drivers
-    const parcels = await this.getParcels();
-    const drivers = await this.getDrivers();
-    return {
-      totalParcels: parcels.length,
-      inTransit: parcels.filter((p: Parcel) => p.status === 'in_transit').length,
-      delivered: parcels.filter((p: Parcel) => p.status === 'delivered').length,
-      pending: parcels.filter((p: Parcel) => p.status === 'pending').length,
-      activeDrivers: drivers.filter((d: Driver) => d.status === 'active').length
-    };
-  }
-
-  // --- EXPORT ---
-  async exportData(): Promise<void> {
-    // For now, just log to console
-    const parcels = await this.getParcels();
-    const drivers = await this.getDrivers();
-    console.log('Exporting data:', { parcels, drivers });
+  demoteFromDriver(userId: string): Observable<any> {
+    return this.http.patch<any>(`${this.API_URL}/users/${userId}/demote-from-driver`, {}, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 } 

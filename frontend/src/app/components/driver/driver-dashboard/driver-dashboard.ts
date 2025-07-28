@@ -18,68 +18,74 @@ import { Parcel } from '../../../models/parcel.model';
 })
 export class DriverDashboard implements OnInit {
   @ViewChild('toast') toast!: Toast;
-  currentDriver: Driver | null = null;
-  activeDeliveries: Parcel[] = [];
-  deliveryHistory: Parcel[] = [];
+  currentDriver: any = null;
+  activeDeliveries: any[] = [];
+  deliveryHistory: any[] = [];
   stats: any = {};
-  selectedParcelForUpdate: Parcel | null = null;
+  selectedParcelForUpdate: any = null;
 
   constructor(private driverService: DriverService) {}
 
   ngOnInit() {
-    this.currentDriver = this.driverService.getCurrentDriver();
-    if (this.currentDriver) {
-      this.loadParcels();
-      this.stats = this.driverService.getDriverStats(
-        this.activeDeliveries.length,
-        this.deliveryHistory.length,
-        this.currentDriver.rating || 0
-      );
-    }
+    this.loadDriverData();
+  }
+
+  loadDriverData() {
+    // Load driver profile
+    this.driverService.getProfile().subscribe(profile => {
+      this.currentDriver = profile;
+    });
+
+    // Load driver stats
+    this.driverService.getStats().subscribe(stats => {
+      this.stats = stats;
+    });
+
+    // Load parcels
+    this.loadParcels();
   }
 
   loadParcels() {
-    if (!this.currentDriver) return;
-    const { active, history } = this.driverService.getDriverParcels(this.currentDriver.id);
-    this.activeDeliveries = active;
-    this.deliveryHistory = history;
+    this.driverService.getParcels().subscribe(parcels => {
+      this.activeDeliveries = parcels.filter(p => p.status === 'in_transit' || p.status === 'picked');
+      this.deliveryHistory = parcels.filter(p => p.status === 'delivered');
+    });
   }
 
   toggleAvailability() {
     if (this.currentDriver) {
       const newStatus = this.currentDriver.status === 'active' ? 'inactive' : 'active';
-      this.currentDriver = this.driverService.updateDriverStatus(this.currentDriver, newStatus);
+      // Note: status field might not be available in DriverProfile interface
+      // This would need to be handled by the backend API
+      this.toast.show('Availability toggle not implemented in current API', 'info');
     }
   }
 
-  startDelivery(delivery: Parcel) {
-    this.driverService.updateDeliveryStatus(delivery.id, 'in_transit');
-    if (this.currentDriver) {
-      this.currentDriver = this.driverService.updateDriverStatus(this.currentDriver, 'on_delivery');
-    }
-    this.loadParcels();
-    this.toast.show('Delivery started!', 'success');
+  startDelivery(delivery: any) {
+    this.driverService.updateParcelStatus(delivery.id, { status: 'in_transit' }).subscribe(() => {
+      this.loadParcels();
+      this.toast.show('Delivery started!', 'success');
+    });
   }
 
-  completeDelivery(delivery: Parcel) {
-    this.driverService.updateDeliveryStatus(delivery.id, 'delivered');
-    if (this.currentDriver) {
-      this.currentDriver = this.driverService.updateDriverStatus(this.currentDriver, 'active');
-    }
-    this.loadParcels();
-    this.toast.show('Delivery completed!', 'success');
+  completeDelivery(delivery: any) {
+    this.driverService.updateParcelStatus(delivery.id, { status: 'delivered' }).subscribe(() => {
+      this.loadParcels();
+      this.toast.show('Delivery completed!', 'success');
+    });
   }
 
-  showUpdateLocation(parcel: Parcel) {
+  showUpdateLocation(parcel: any) {
     this.selectedParcelForUpdate = parcel;
   }
 
   onLocationUpdated(newLocation: { lat: number, lng: number }) {
     if (this.selectedParcelForUpdate) {
-      this.driverService.updateParcelLocation(this.selectedParcelForUpdate.id, newLocation);
-      this.toast.show('Location updated!', 'success');
-      this.selectedParcelForUpdate = null;
-      this.loadParcels();
+      this.driverService.updateParcelLocation(this.selectedParcelForUpdate.id, newLocation).subscribe(() => {
+        this.toast.show('Location updated!', 'success');
+        this.selectedParcelForUpdate = null;
+        this.loadParcels();
+      });
     }
   }
 }

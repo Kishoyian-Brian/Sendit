@@ -1,83 +1,122 @@
 import { Injectable } from '@angular/core';
-import { Driver } from '../models/driver.model';
-import { Parcel } from '../models/parcel.model';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class DriverService {
-  private readonly DEFAULT_DRIVER = {
-    id: 'DRV001',
-    email: 'driver@sendit.com',
-    password: 'Driver@123',
-    firstName: 'John',
-    lastName: 'Driver',
-    phone: '+254712345678',
-    status: 'active' as const,
-    currentLocation: { lat: -1.2921, lng: 36.8219, address: 'Nairobi, Kenya' },
-    rating: 4.8,
-    deliveriesCompleted: 150,
-    vehicleInfo: { type: 'Van', plateNumber: 'KBC 123X', model: 'Toyota HiAce 2022' }
+export interface DriverProfile {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  createdAt: string;
+  _count?: {
+    parcels: number;
   };
+}
 
-  getCurrentDriver(): Driver | null {
-    const driverData = localStorage.getItem('driver_data');
-    if (driverData) {
-      return JSON.parse(driverData);
-    }
-    // For development, you can fall back to the default driver
-    if (localStorage.getItem('drivers')) {
-      return this.DEFAULT_DRIVER;
-    }
-    return null;
+export interface DriverStats {
+  totalParcels: number;
+  activeParcels: number;
+  deliveredParcels: number;
+  deliveryRate: number;
+}
+
+export interface DriverParcel {
+  id: number;
+  trackingNumber: string;
+  sender: any;
+  recipientName: string;
+  recipientEmail: string;
+  recipientPhone?: string;
+  pickupAddress: string;
+  deliveryAddress: string;
+  status: string;
+  currentLat?: number;
+  currentLng?: number;
+  weight?: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface UpdateLocationDto {
+  lat: number;
+  lng: number;
+}
+
+export interface UpdateStatusDto {
+  status: string;
+  notes?: string;
+}
+
+export interface NearbyParcel {
+  id: number;
+  trackingNumber: string;
+  pickupAddress: string;
+  deliveryAddress: string;
+  weight?: string;
+  description?: string;
+  distance?: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class DriverService {
+  private readonly API_URL = 'http://localhost:3000';
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
+
+  // Profile Management
+  getProfile(): Observable<DriverProfile> {
+    return this.http.get<DriverProfile>(`${this.API_URL}/driver/profile`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  getDriverParcels(driverId: string): { active: Parcel[], history: Parcel[] } {
-    const allParcels: Parcel[] = JSON.parse(localStorage.getItem('admin_parcels') || '[]');
-    const driverParcels = allParcels.filter(p => p.driverId === driverId);
-
-    const active = driverParcels.filter(p => p.status !== 'delivered');
-    const history = driverParcels.filter(p => p.status === 'delivered');
-
-    return { active, history };
+  updateProfile(profile: Partial<DriverProfile>): Observable<DriverProfile> {
+    return this.http.patch<DriverProfile>(`${this.API_URL}/driver/profile`, profile, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  getDriverStats(activeCount: number, historyCount: number, rating: number): any {
-    return {
-      todayDeliveries: activeCount,
-      weeklyDeliveries: activeCount + historyCount,
-      monthlyRating: rating,
-      totalEarnings: (activeCount + historyCount) * 500
-    };
+  // Statistics
+  getStats(): Observable<DriverStats> {
+    return this.http.get<DriverStats>(`${this.API_URL}/driver/stats`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  updateDeliveryStatus(parcelId: string, newStatus: 'in_transit' | 'delivered'): void {
-    const allParcels: Parcel[] = JSON.parse(localStorage.getItem('admin_parcels') || '[]');
-    const parcelIndex = allParcels.findIndex(p => p.id === parcelId);
-
-    if (parcelIndex !== -1) {
-      allParcels[parcelIndex].status = newStatus;
-      if (newStatus === 'delivered') {
-        allParcels[parcelIndex].deliveredAt = new Date().toISOString();
-      }
-      localStorage.setItem('admin_parcels', JSON.stringify(allParcels));
-    }
+  // Parcel Management
+  getParcels(): Observable<DriverParcel[]> {
+    return this.http.get<DriverParcel[]>(`${this.API_URL}/driver/parcels`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  updateDriverStatus(driver: Driver, status: 'active' | 'inactive' | 'on_delivery'): Driver {
-    driver.status = status;
-    // In a real app, update this on the backend
-    return driver;
+  updateParcelLocation(parcelId: number, location: UpdateLocationDto): Observable<DriverParcel> {
+    return this.http.patch<DriverParcel>(`${this.API_URL}/driver/parcels/${parcelId}/location`, location, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 
-  updateParcelLocation(parcelId: string, newLocation: { lat: number, lng: number }) {
-    const parcels: Parcel[] = JSON.parse(localStorage.getItem('admin_parcels') || '[]');
-    const parcel = parcels.find(p => p.id === parcelId);
-    if (parcel) {
-      parcel.currentLocation = newLocation;
-      if (!parcel.route) parcel.route = [];
-      parcel.route.push({ ...newLocation, timestamp: new Date().toISOString() });
-      localStorage.setItem('admin_parcels', JSON.stringify(parcels));
-    }
+  updateParcelStatus(parcelId: number, status: UpdateStatusDto): Observable<DriverParcel> {
+    return this.http.patch<DriverParcel>(`${this.API_URL}/driver/parcels/${parcelId}/status`, status, {
+      headers: this.authService.getAuthHeaders()
+    });
+  }
+
+  acceptParcel(parcelId: number): Observable<DriverParcel> {
+    return this.http.post<DriverParcel>(`${this.API_URL}/driver/parcels/${parcelId}/accept`, {}, {
+      headers: this.authService.getAuthHeaders()
+    });
+  }
+
+  // Nearby Parcels
+  getNearbyParcels(lat: number, lng: number, radius: number = 10): Observable<NearbyParcel[]> {
+    return this.http.get<NearbyParcel[]>(`${this.API_URL}/driver/nearby-parcels?lat=${lat}&lng=${lng}&radius=${radius}`, {
+      headers: this.authService.getAuthHeaders()
+    });
   }
 } 

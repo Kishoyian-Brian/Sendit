@@ -1,1 +1,99 @@
-<p>contact works!</p>
+<div class="min-h-screen bg-gray-100 flex flex-col">
+  <app-navbar></app-navbar>
+
+  <!-- Contact Section -->
+  <div class="flex-grow flex items-center justify-center px-4 py-20">
+    <div class="w-full max-w-2xl">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
+        <p class="text-lg text-gray-600">
+          Have questions or need support? Reach out to us and our team will get back to you as soon as possible.
+        </p>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="bg-white rounded-lg shadow-lg p-8">
+        <form (ngSubmit)="submitForm()" class="space-y-6">
+          <!-- Name -->
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              [(ngModel)]="contactForm.name"
+              name="name"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-700 focus:border-transparent"
+              placeholder="Enter your full name"
+            >
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              [(ngModel)]="contactForm.email"
+              name="email"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-700 focus:border-transparent"
+              placeholder="Enter your email address"
+            >
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+            <textarea
+              id="message"
+              [(ngModel)]="contactForm.message"
+              name="message"
+              required
+              rows="6"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-700 focus:border-transparent resize-none"
+              placeholder="Tell us how we can help you..."
+            ></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <div>
+            <button
+              type="submit"
+              [disabled]="isSubmitting"
+              class="w-full bg-red-700 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-800 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span *ngIf="!isSubmitting">Send Message</span>
+              <span *ngIf="isSubmitting">Sending...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+          <div class="text-red-700 text-2xl mb-2">📧</div>
+          <h3 class="font-semibold text-gray-900 mb-2">Email</h3>
+          <p class="text-gray-600">support&#64;sendit.co.ke</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+          <div class="text-red-700 text-2xl mb-2">📞</div>
+          <h3 class="font-semibold text-gray-900 mb-2">Phone</h3>
+          <p class="text-gray-600">+254 712 345 678</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+          <div class="text-red-700 text-2xl mb-2">📍</div>
+          <h3 class="font-semibold text-gray-900 mb-2">Location</h3>
+          <p class="text-gray-600">Nairobi, Kenya</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-footer></app-footer>
+  <app-toast #toast></app-toast>
+</div>

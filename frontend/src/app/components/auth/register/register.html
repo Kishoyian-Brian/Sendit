@@ -16,15 +16,15 @@
     <div class="w-full max-w-md bg-gray-200 rounded p-8">
       <form class="space-y-6" (ngSubmit)="register()">
         <div>
-          <input [(ngModel)]="firstName" name="firstName" required placeholder="Enter Your First Name"
-            class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900 bg-white input-inner-top-shadow">
-        </div>
-        <div>
-          <input [(ngModel)]="lastName" name="lastName" required placeholder="Enter Your Last Name"
+          <input [(ngModel)]="name" name="name" required placeholder="Enter Your Full Name"
             class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900 bg-white input-inner-top-shadow">
         </div>
         <div>
           <input [(ngModel)]="email" name="email" type="email" required placeholder="Enter Your Email"
+            class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900 bg-white input-inner-top-shadow">
+        </div>
+        <div>
+          <input [(ngModel)]="phone" name="phone" type="tel" required placeholder="Enter Your Phone Number"
             class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900 bg-white input-inner-top-shadow">
         </div>
         <div>
@@ -35,10 +35,10 @@
           <input [(ngModel)]="confirmPassword" name="confirmPassword" type="password" required placeholder="Confirm Password"
             class="w-full px-4 py-3 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-[#BA0C2F] text-gray-900 bg-white input-inner-top-shadow">
         </div>
-        <!-- Add any extra fields here, using the same input style -->
-        <button type="submit"
-          class="w-full bg-[#BA0C2F] hover:bg-[#a40a29] transition py-3 font-bold rounded text-white">
-          Register
+        <button type="submit" [disabled]="isLoading"
+          class="w-full bg-[#BA0C2F] hover:bg-[#a40a29] disabled:bg-gray-400 disabled:cursor-not-allowed transition py-3 font-bold rounded text-white">
+          <span *ngIf="!isLoading">Register</span>
+          <span *ngIf="isLoading">Registering...</span>
         </button>
         <p class="text-center text-sm text-gray-700">
           Already have an Account?

@@ -42,6 +42,12 @@ export interface AdminUserRegisteredEmailData {
   registrationDate: string;
 }
 
+export interface ContactFormEmailData {
+  name: string;
+  email: string;
+  message: string;
+}
+
 @Injectable()
 export class AppMailerService {
   constructor(private readonly mailerService: MailerService) {}
@@ -155,6 +161,26 @@ export class AppMailerService {
       console.log(`Password reset email sent to ${email}`);
     } catch (error) {
       console.error('Failed to send password reset email:', error);
+    }
+  }
+
+  async sendContactFormEmail(data: ContactFormEmailData): Promise<void> {
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@sendit.com';
+      
+      await this.mailerService.sendMail({
+        to: adminEmail,
+        subject: `New Contact Form Submission - ${data.name}`,
+        template: 'contact-form',
+        context: {
+          name: data.name,
+          email: data.email,
+          message: data.message,
+        },
+      });
+      console.log(`Contact form email sent to admin from ${data.email}`);
+    } catch (error) {
+      console.error('Failed to send contact form email:', error);
     }
   }
 } 

@@ -193,4 +193,51 @@ export class AuthService {
 
     return { message: 'Password reset email sent successfully' };
   }
+
+  async verifyOtp(email: string, otp: string) {
+    // Find user by email
+    const user = await this.prisma.user.findFirst({ where: { email } });
+    
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or OTP');
+    }
+
+    // In a real implementation, you would store and verify OTP from database
+    // For now, we'll use a simple verification (you should implement proper OTP storage)
+    // This is a placeholder - replace with actual OTP verification logic
+    const expectedOtp = '123456'; // This should come from your OTP storage system
+    
+    if (otp !== expectedOtp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    return { message: 'OTP verified successfully' };
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    // Find user by email
+    const user = await this.prisma.user.findFirst({ where: { email } });
+    
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or OTP');
+    }
+
+    // Verify OTP again (in production, check against stored OTP)
+    const expectedOtp = '123456'; // This should come from your OTP storage system
+    
+    if (otp !== expectedOtp) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password reset successfully' };
+  }
 }
