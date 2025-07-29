@@ -119,4 +119,11 @@ export class DriverService {
       headers: this.authService.getAuthHeaders()
     });
   }
+
+  // Update driver's own location
+  updateDriverLocation(location: UpdateLocationDto): Observable<any> {
+    return this.http.patch<any>(`${this.API_URL}/driver/location`, location, {
+      headers: this.authService.getAuthHeaders()
+    });
+  }
 } 

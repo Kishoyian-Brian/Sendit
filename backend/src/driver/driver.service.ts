@@ -4,6 +4,7 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdateParcelStatusDto } from './dto/update-parcel-status.dto';
 import { TrackingGateway } from '../tracking/tracking.gateway';
 import fetch from 'node-fetch';
+import { AppMailerService } from '../mailer/mailer.service';
 
 interface NominatimResponse {
   display_name?: string;
@@ -13,7 +14,7 @@ interface NominatimResponse {
 export class DriverService {
   private prisma = new PrismaClient();
 
-  constructor(private readonly trackingGateway: TrackingGateway) {}
+  constructor(private readonly trackingGateway: TrackingGateway, private readonly mailerService: AppMailerService) {}
 
   // Get driver's assigned parcels
   async getDriverParcels(driverId: number) {
@@ -39,6 +40,9 @@ export class DriverService {
         email: true,
         phone: true,
         role: true,
+        currentLat: true,
+        currentLng: true,
+        currentAddress: true,
         createdAt: true
       }
     });
@@ -170,7 +174,8 @@ export class DriverService {
       where: { id: parcelId },
       include: { 
         route: { orderBy: { timestamp: 'desc' } },
-        driver: true
+        driver: true,
+        sender: true
       }
     });
     
@@ -208,6 +213,54 @@ export class DriverService {
         driver: { select: { id: true, name: true } }
       }
     });
+
+    // Check if location matches delivery destination
+    let destinationReached = false;
+    if (parcel.deliveryLocation) {
+      const [destLat, destLng] = parcel.deliveryLocation.split(',').map(Number);
+      const threshold = 0.0005; // ~50 meters
+      if (
+        Math.abs(dto.lat - destLat) < threshold &&
+        Math.abs(dto.lng - destLng) < threshold
+      ) {
+        destinationReached = true;
+      }
+    }
+
+    if (destinationReached) {
+      // Send emails to recipient, sender, and admin
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@sendit.com';
+      const mailer = this.mailerService;
+      // Recipient
+      await mailer.sendStatusUpdateEmail({
+        recipientName: parcel.recipientName,
+        recipientEmail: parcel.recipientEmail,
+        trackingNumber: parcel.trackingNumber,
+        status: 'delivered',
+        currentLocation: address,
+        estimatedDelivery: new Date().toISOString(),
+      });
+      // Sender
+      if (parcel.sender?.email) {
+        await mailer.sendStatusUpdateEmail({
+          recipientName: parcel.sender.name,
+          recipientEmail: parcel.sender.email,
+          trackingNumber: parcel.trackingNumber,
+          status: 'delivered',
+          currentLocation: address,
+          estimatedDelivery: new Date().toISOString(),
+        });
+      }
+      // Admin
+      await mailer.sendStatusUpdateEmail({
+        recipientName: 'Admin',
+        recipientEmail: adminEmail,
+        trackingNumber: parcel.trackingNumber,
+        status: 'delivered',
+        currentLocation: address,
+        estimatedDelivery: new Date().toISOString(),
+      });
+    }
 
     // Emit WebSocket event for real-time updates
     this.trackingGateway.emitLocationUpdate(parcel.trackingNumber, {
@@ -284,6 +337,60 @@ export class DriverService {
       success: true,
       parcel: updatedParcel,
       message: 'Parcel assigned successfully'
+    };
+  }
+
+  // Update driver's own location
+  async updateDriverLocation(driverId: number, dto: UpdateLocationDto) {
+    const driver = await this.prisma.user.findFirst({
+      where: { id: driverId, role: 'DRIVER' }
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver not found');
+    }
+
+    // Reverse geocode using OpenStreetMap Nominatim
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${dto.lat}&lon=${dto.lng}`;
+    let address = '';
+    try {
+      const response = await fetch(url, { headers: { 'User-Agent': 'SendItApp/1.0' } });
+      const data = await response.json() as NominatimResponse;
+      address = data.display_name || '';
+    } catch (e) {
+      address = '';
+    }
+
+    // Update driver's location in the database
+    const updatedDriver = await this.prisma.user.update({
+      where: { id: driverId },
+      data: {
+        currentLat: dto.lat,
+        currentLng: dto.lng,
+        currentAddress: address,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        currentLat: true,
+        currentLng: true,
+        currentAddress: true,
+        createdAt: true
+      }
+    });
+
+    return {
+      success: true,
+      driver: updatedDriver,
+      location: {
+        lat: dto.lat,
+        lng: dto.lng,
+        address
+      },
+      message: 'Driver location updated successfully'
     };
   }
 }

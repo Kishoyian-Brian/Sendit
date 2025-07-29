@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { EjsAdapter } from '@nestjs-modules/mailer/dist/adapters/ejs.adapter';
 import { AppMailerService } from './mailer.service';
-import { join } from 'path';
 
 @Module({
   imports: [
@@ -18,13 +16,6 @@ import { join } from 'path';
       },
       defaults: {
         from: `"SendIt" <${process.env.SMTP_USER || 'noreply@sendit.com'}>`,
-      },
-      template: {
-        dir: join(__dirname, 'templates'),
-        adapter: new EjsAdapter(),
-        options: {
-          strict: false,
-        },
       },
     }),
   ],

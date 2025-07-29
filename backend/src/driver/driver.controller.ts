@@ -16,28 +16,28 @@ export class DriverController {
   // Get driver's assigned parcels
   @Get('parcels')
   async getDriverParcels(@Request() req) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.getDriverParcels(driverId);
   }
 
   // Get driver profile
   @Get('profile')
   async getDriverProfile(@Request() req) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.getDriverProfile(driverId);
   }
 
   // Update driver profile
   @Patch('profile')
   async updateDriverProfile(@Request() req, @Body() updateData: UpdateDriverProfileDto) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.updateDriverProfile(driverId, updateData);
   }
 
   // Get driver statistics
   @Get('stats')
   async getDriverStats(@Request() req) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.getDriverStats(driverId);
   }
 
@@ -56,14 +56,21 @@ export class DriverController {
   // Get nearby parcels for driver
   @Get('nearby-parcels')
   async getNearbyParcels(@Request() req, @Body() location: { lat: number; lng: number; radius?: number }) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.getNearbyParcels(driverId, location.lat, location.lng, location.radius);
   }
 
   // Accept parcel assignment
   @Post('parcels/:id/accept')
   async acceptParcel(@Request() req, @Param('id') id: string) {
-    const driverId = req.user.id;
+    const driverId = req.user.userId;
     return this.driverService.acceptParcel(driverId, Number(id));
+  }
+
+  // Update driver's own location
+  @Patch('location')
+  async updateDriverLocation(@Request() req, @Body() dto: UpdateLocationDto) {
+    const driverId = req.user.userId;
+    return this.driverService.updateDriverLocation(driverId, dto);
   }
 }

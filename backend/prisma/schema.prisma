@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,16 +8,19 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  phone     String?
-  role      Role     @default(USER)
-  parcels   Parcel[] @relation("UserParcels")
-  driverParcels Parcel[] @relation("DriverParcels")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  name           String
+  phone          String?
+  role           Role     @default(USER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  currentAddress String?
+  currentLat     Float?
+  currentLng     Float?
+  driverParcels  Parcel[] @relation("DriverParcels")
+  parcels        Parcel[] @relation("UserParcels")
 }
 
 model Admin {
@@ -36,54 +33,53 @@ model Admin {
 }
 
 model Parcel {
-  id                Int      @id @default(autoincrement())
-  trackingNumber    String   @unique
+  id                Int          @id @default(autoincrement())
+  trackingNumber    String       @unique
   senderId          Int
-  sender            User     @relation("UserParcels", fields: [senderId], references: [id])
   recipientName     String
   recipientEmail    String
   recipientPhone    String?
   pickupAddress     String
-  pickupLocation    String?   // e.g., "CBD, Nairobi, Kenya"
+  pickupLocation    String?
   deliveryAddress   String
-  deliveryLocation  String?   // e.g., "Westlands, Nairobi, Kenya"
+  deliveryLocation  String?
   driverId          Int?
-  driver            User?     @relation("DriverParcels", fields: [driverId], references: [id])
-  status            String    @default("pending") // pending, in_transit, delivered, etc.
+  status            String       @default("pending")
   currentLat        Float?
   currentLng        Float?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   currentAddress    String?
-  weight            String?   // e.g., "2.5kg", "5lbs"
-  description       String?   // Package description
   deliveredAt       DateTime?
-  // Route optimization fields
-  optimizedRoute    Json?     // Store the calculated route as JSON
-  routeDistance     Float?    // Total route distance in km
-  routeDuration     Int?      // Total route duration in seconds
-  estimatedArrival  DateTime? // ETA for delivery
-  routePolyline     String?   // Encoded polyline for map display
-  routeInstructions Json?     // Turn-by-turn instructions
+  description       String?
+  weight            String?
+  estimatedArrival  DateTime?
+  optimizedRoute    Json?
+  routeDistance     Float?
+  routeDuration     Int?
+  routeInstructions Json?
+  routePolyline     String?
+  driver            User?        @relation("DriverParcels", fields: [driverId], references: [id])
+  sender            User         @relation("UserParcels", fields: [senderId], references: [id])
   route             RoutePoint[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
 }
 
 model RoutePoint {
   id        Int      @id @default(autoincrement())
   parcelId  Int
-  parcel    Parcel   @relation(fields: [parcelId], references: [id])
   lat       Float
   lng       Float
   timestamp DateTime @default(now())
+  parcel    Parcel   @relation(fields: [parcelId], references: [id])
 }
 
 model MailLog {
-  id        Int      @id @default(autoincrement())
-  to        String
-  subject   String
-  body      String
-  sentAt    DateTime @default(now())
-  status    String   // sent, failed, etc.
+  id      Int      @id @default(autoincrement())
+  to      String
+  subject String
+  body    String
+  sentAt  DateTime @default(now())
+  status  String
 }
 
 enum Role {

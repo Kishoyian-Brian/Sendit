@@ -1,196 +1,210 @@
 <app-navbar [dashboardType]="'driver'"></app-navbar>
 
-<div class="min-h-screen bg-gray-100 p-6">
-  <!-- Driver Info -->
-  @if (currentDriver) {
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <div class="flex justify-between items-start">
-        <div>
-          <h2 class="text-2xl font-bold">{{ currentDriver.firstName }} {{ currentDriver.lastName }}</h2>
-          <p class="text-gray-600">ID: {{ currentDriver.id }}</p>
-          <p class="text-gray-600">Vehicle: {{ currentDriver.vehicleInfo.model }} ({{ currentDriver.vehicleInfo.plateNumber }})</p>
-        </div>
-        <div class="text-right">
-          <span 
-            class="px-3 py-1 rounded-full text-sm font-semibold"
-            [class.bg-green-100]="currentDriver.status === 'active'"
-            [class.text-green-800]="currentDriver.status === 'active'"
-            [class.bg-red-100]="currentDriver.status === 'inactive'"
-            [class.text-red-800]="currentDriver.status === 'inactive'"
-            [class.bg-blue-100]="currentDriver.status === 'on_delivery'"
-            [class.text-blue-800]="currentDriver.status === 'on_delivery'"
-          >
-            {{ currentDriver.status === 'on_delivery' ? 'On Delivery' : (currentDriver.status === 'active' ? 'Available' : 'Offline') }}
-          </span>
-          <button 
-            (click)="toggleAvailability()"
-            class="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            [disabled]="currentDriver.status === 'on_delivery'"
-          >
-            {{ currentDriver.status === 'active' ? 'Go Offline' : 'Go Online' }}
-          </button>
-        </div>
-      </div>
-    </div>
+<div class="min-h-screen bg-gray-100 flex">
+  <!-- Side Nav -->
+  <aside class="w-64 bg-white shadow-lg p-6 flex flex-col gap-4">
+    <button (click)="setSection('location')"
+      [class.bg-red-600]="selectedSection === 'location'"
+      [class.text-white]="selectedSection === 'location'"
+      class="w-full text-left px-4 py-2 rounded transition hover:bg-red-100 mb-2">
+      Current Location
+    </button>
+    <button (click)="setSection('active')"
+      [class.bg-red-600]="selectedSection === 'active'"
+      [class.text-white]="selectedSection === 'active'"
+      class="w-full text-left px-4 py-2 rounded transition hover:bg-red-100 mb-2">
+      Active Delivery
+    </button>
+    <button (click)="setSection('history')"
+      [class.bg-red-600]="selectedSection === 'history'"
+      [class.text-white]="selectedSection === 'history'"
+      class="w-full text-left px-4 py-2 rounded transition hover:bg-red-100">
+      Delivery History
+    </button>
+  </aside>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-4 gap-6 mb-6">
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-gray-500 text-sm mb-2">Today's Deliveries</h3>
-        <p class="text-3xl font-bold">{{ stats.todayDeliveries }}</p>
-      </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-gray-500 text-sm mb-2">Weekly Deliveries</h3>
-        <p class="text-3xl font-bold">{{ stats.weeklyDeliveries }}</p>
-      </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-gray-500 text-sm mb-2">Monthly Rating</h3>
-        <p class="text-3xl font-bold text-yellow-500">{{ stats.monthlyRating }}/5</p>
-      </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-gray-500 text-sm mb-2">Total Earnings</h3>
-        <p class="text-3xl font-bold text-green-600">KES {{ stats.totalEarnings }}</p>
-      </div>
-    </div>
-
-    <!-- Current Location -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h3 class="text-lg font-semibold mb-2">Current Location</h3>
-          <p class="text-gray-600">{{ currentDriver.currentLocation?.address }}</p>
+  <!-- Main Content -->
+  <main class="flex-1 p-8">
+    @if (currentDriver) {
+      <div class="grid grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-gray-500 text-sm mb-2">Today's Deliveries</h3>
+          <p class="text-3xl font-bold">{{ stats.todayDeliveries || 0 }}</p>
         </div>
-        <button 
-          disabled
-          class="px-4 py-2 bg-blue-300 text-white rounded cursor-not-allowed"
-        >
-          Update Location (select a delivery below)
-        </button>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-gray-500 text-sm mb-2">Weekly Deliveries</h3>
+          <p class="text-3xl font-bold">{{ stats.weeklyDeliveries || 0 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-gray-500 text-sm mb-2">Monthly Rating</h3>
+          <p class="text-3xl font-bold text-yellow-500">{{ stats.monthlyRating || 0 }}/5</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-gray-500 text-sm mb-2">Total Earnings</h3>
+          <p class="text-3xl font-bold text-green-600">KES {{ stats.totalEarnings || 0 }}</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Active Deliveries -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <h3 class="text-lg font-semibold mb-4">Active Deliveries</h3>
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking No.</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pickup</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destination</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            @for (delivery of activeDeliveries; track delivery.id) {
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.trackingNumber }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.pickupAddress }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveryAddress }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div>{{ delivery.recipient }}</div>
-                  <div class="text-sm text-gray-500">{{ delivery.recipientPhone }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span 
-                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                    [class.bg-yellow-100]="delivery.status === 'pending_pickup'"
-                    [class.text-yellow-800]="delivery.status === 'pending_pickup'"
-                    [class.bg-blue-100]="delivery.status === 'in_transit'"
-                    [class.text-blue-800]="delivery.status === 'in_transit'"
-                  >
-                    {{ delivery.status === 'pending_pickup' ? 'Pending Pickup' : 'In Transit' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  @if (delivery.status === 'pending_pickup') {
-                    <button
-                      (click)="startDelivery(delivery)"
-                      class="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Start Delivery
-                    </button>
-                  } @else if (delivery.status === 'in_transit') {
-                    <button
-                      (click)="completeDelivery(delivery)"
-                      class="text-green-600 hover:text-green-900 mr-4"
-                    >
-                      Complete
-                    </button>
-                    <button
-                      (click)="showUpdateLocation(delivery)"
-                      class="text-purple-600 hover:text-purple-900"
-                    >
-                      Update Location
-                    </button>
-                  }
-                </td>
-              </tr>
+      <!-- Section Content -->
+      @if (selectedSection === 'location') {
+        <!-- Current Location -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-semibold mb-2">Current Location</h3>
+              <p class="text-gray-600">{{ currentDriver.currentLocation?.address || 'Location not set' }}</p>
+            </div>
+            <button 
+              (click)="showDriverLocationMap()"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            >
+              Update Location
+            </button>
+          </div>
+        </div>
+      }
+      @if (selectedSection === 'active') {
+        <!-- Active Deliveries -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h3 class="text-lg font-semibold mb-4">Active Deliveries</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking No.</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pickup</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destination</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (delivery of activeDeliveries; track delivery.id) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.trackingNumber }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.pickupAddress }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveryAddress }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>{{ delivery.recipient }}</div>
+                      <div class="text-sm text-gray-500">{{ delivery.recipientPhone }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span 
+                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                        [class.bg-yellow-100]="delivery.status === 'pending_pickup'"
+                        [class.text-yellow-800]="delivery.status === 'pending_pickup'"
+                        [class.bg-blue-100]="delivery.status === 'in_transit'"
+                        [class.text-blue-800]="delivery.status === 'in_transit'"
+                      >
+                        {{ delivery.status === 'pending_pickup' ? 'Pending Pickup' : 'In Transit' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      @if (delivery.status === 'pending') {
+                        <button
+                          (click)="startDelivery(delivery)"
+                          class="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Start Delivery
+                        </button>
+                      } @else if (delivery.status === 'in_transit') {
+                        <button
+                          (click)="completeDelivery(delivery)"
+                          class="text-green-600 hover:text-green-900 mr-4"
+                        >
+                          Complete
+                        </button>
+                        <button
+                          (click)="showUpdateLocation(delivery)"
+                          class="text-purple-600 hover:text-purple-900"
+                        >
+                          Update Location
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (activeDeliveries.length === 0) {
+              <div class="text-center text-gray-500 py-4">No active deliveries assigned to you.</div>
             }
-          </tbody>
-        </table>
-        @if (activeDeliveries.length === 0) {
-          <div class="text-center text-gray-500 py-4">No active deliveries assigned to you.</div>
-        }
-      </div>
-    </div>
-
-    <!-- Delivery History -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-      <h3 class="text-lg font-semibold mb-4">Delivery History</h3>
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking No.</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pickup</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destination</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Time</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            @for (delivery of deliveryHistory; track delivery.id) {
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.trackingNumber }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.pickupAddress }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveryAddress }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div>{{ delivery.recipient }}</div>
-                  <div class="text-sm text-gray-500">{{ delivery.recipientPhone }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveredAt }}</td>
-              </tr>
+          </div>
+        </div>
+      }
+      @if (selectedSection === 'history') {
+        <!-- Delivery History -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold mb-4">Delivery History</h3>
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tracking No.</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pickup</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destination</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Time</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (delivery of deliveryHistory; track delivery.id) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.trackingNumber }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.pickupAddress }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveryAddress }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>{{ delivery.recipient }}</div>
+                      <div class="text-sm text-gray-500">{{ delivery.recipientPhone }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ delivery.deliveredAt }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (deliveryHistory.length === 0) {
+              <div class="text-center text-gray-500 py-4">No completed deliveries yet.</div>
             }
-          </tbody>
-        </table>
-        @if (deliveryHistory.length === 0) {
-          <div class="text-center text-gray-500 py-4">No completed deliveries yet.</div>
-        }
-      </div>
-    </div>
-  }
+          </div>
+        </div>
+      }
+    }
+  </main>
 </div>
 
 <!-- Map Modal -->
 @if (selectedParcelForUpdate) {
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl">
-      <h3 class="text-xl font-semibold mb-4">Update Location for {{selectedParcelForUpdate.trackingNumber}}</h3>
-      <app-map-view
-        [parcels]="[selectedParcelForUpdate]"
-        [driverLocation]="currentDriver?.currentLocation || null"
-        (mapLocationSelected)="onLocationUpdated($event)"
-      ></app-map-view>
-      <button
-        (click)="selectedParcelForUpdate = null"
-        class="mt-4 px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-      >
-        Close
+  <div class="fixed inset-0 z-[9999] bg-black">
+    <app-navbar [dashboardType]="'driver'"></app-navbar>
+    <div class="w-full h-full relative pt-20">
+      <!-- Close Button -->
+      <button (click)="selectedParcelForUpdate = null"
+        class="absolute top-24 right-4 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 hover:text-red-600 rounded-full p-3 shadow-lg transition-all duration-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
+      
+      <!-- Map Title -->
+      <div class="absolute top-24 left-4 z-10 bg-white bg-opacity-90 rounded-lg px-4 py-2 shadow-lg">
+        @if (selectedParcelForUpdate.trackingNumber === 'DRIVER_LOCATION') {
+          <h3 class="text-lg font-semibold text-gray-800">📍 Update Your Location</h3>
+          <p class="text-sm text-gray-600">Click on the map to set your current location</p>
+        } @else {
+          <h3 class="text-lg font-semibold text-gray-800">🗺️ Update Parcel Location</h3>
+          <p class="text-sm text-gray-600">Click on the map to update parcel location</p>
+        }
+      </div>
+      
+      <!-- Map Component -->
+      <div class="w-full h-full">
+        <app-map-view
+          [parcels]="selectedParcelForUpdate.trackingNumber === 'DRIVER_LOCATION' ? [] : [selectedParcelForUpdate]"
+          [driverLocation]="currentDriver?.currentLocation || null"
+          (mapLocationSelected)="selectedParcelForUpdate.trackingNumber === 'DRIVER_LOCATION' ? updateDriverLocation($event) : onLocationUpdated($event)"
+        ></app-map-view>
+      </div>
     </div>
   </div>
 }

@@ -23,6 +23,11 @@ export class DriverDashboard implements OnInit {
   deliveryHistory: any[] = [];
   stats: any = {};
   selectedParcelForUpdate: any = null;
+  selectedSection: 'location' | 'active' | 'history' = 'location';
+
+  setSection(section: 'location' | 'active' | 'history') {
+    this.selectedSection = section;
+  }
 
   constructor(private driverService: DriverService) {}
 
@@ -47,7 +52,9 @@ export class DriverDashboard implements OnInit {
 
   loadParcels() {
     this.driverService.getParcels().subscribe(parcels => {
-      this.activeDeliveries = parcels.filter(p => p.status === 'in_transit' || p.status === 'picked');
+      this.activeDeliveries = parcels.filter(p =>
+        p.status === 'in_transit' || p.status === 'picked' || p.status === 'pending'
+      );
       this.deliveryHistory = parcels.filter(p => p.status === 'delivered');
     });
   }
@@ -87,5 +94,25 @@ export class DriverDashboard implements OnInit {
         this.loadParcels();
       });
     }
+  }
+
+  // Update driver's own location
+  updateDriverLocation(newLocation: { lat: number, lng: number }) {
+    this.driverService.updateDriverLocation(newLocation).subscribe({
+      next: (response) => {
+        this.toast.show('Driver location updated successfully!', 'success');
+        // Reload driver data to get updated location
+        this.loadDriverData();
+      },
+      error: (error) => {
+        console.error('Error updating driver location:', error);
+        this.toast.show('Failed to update location', 'error');
+      }
+    });
+  }
+
+  // Show map for driver location update
+  showDriverLocationMap() {
+    this.selectedParcelForUpdate = { trackingNumber: 'DRIVER_LOCATION' }; // Use a special marker
   }
 }
