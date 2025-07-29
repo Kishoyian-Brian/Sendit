@@ -36,12 +36,19 @@ export class Login {
         
         // Navigate based on user role
         const user = this.authService.getCurrentUser();
+        console.log('Logged in user:', user); // Debug log
+        
         if (user?.role === 'ADMIN') {
           setTimeout(() => this.router.navigate(['/admin-dashboard']), 1500);
         } else if (user?.role === 'DRIVER') {
           setTimeout(() => this.router.navigate(['/driver-dashboard']), 1500);
+        } else if (user?.role === 'USER') {
+          // Registered users go to landing page
+          setTimeout(() => this.router.navigate(['/']), 1500);
         } else {
-          setTimeout(() => this.router.navigate(['/user-dashboard']), 1500);
+          // Fallback for users without role or unknown role
+          console.warn('User has no role or unknown role:', user);
+          setTimeout(() => this.router.navigate(['/']), 1500);
         }
       },
       error: (error) => {

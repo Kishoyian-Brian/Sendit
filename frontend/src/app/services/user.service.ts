@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { map } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -62,15 +63,19 @@ export class UserService {
 
   // Parcel Management
   getMyParcels(): Observable<UserParcel[]> {
-    return this.http.get<UserParcel[]>(`${this.API_URL}/parcel/my-parcels`, {
+    return this.http.get<any>(`${this.API_URL}/parcel/my-parcels`, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(
+      map(response => response.data || response)
+    );
   }
 
   getParcelStats(): Observable<ParcelStats> {
-    return this.http.get<ParcelStats>(`${this.API_URL}/parcel/stats`, {
+    return this.http.get<any>(`${this.API_URL}/parcel/stats`, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(
+      map(response => response.data || response)
+    );
   }
 
   // Tracking

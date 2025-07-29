@@ -13,8 +13,34 @@ export class AdminService {
   constructor(private mailerService: AppMailerService) {}
 
   // Parcels
-  async getParcels() {
-    return this.prisma.parcel.findMany();
+  async getParcels(page = 1, pageSize = 12) {
+    console.log('AdminService.getParcels called with page:', page, 'pageSize:', pageSize);
+    const skip = (page - 1) * pageSize;
+    const [parcels, total] = await Promise.all([
+      this.prisma.parcel.findMany({
+        skip,
+        take: pageSize,
+        include: {
+          sender: { select: { id: true, name: true, email: true } },
+          driver: { select: { id: true, name: true, email: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.parcel.count()
+    ]);
+    
+    const result = {
+      data: parcels,
+      total,
+      page,
+      pageSize
+    };
+    
+    console.log('AdminService.getParcels result:', result);
+    console.log('Parcels found:', parcels.length);
+    console.log('Total parcels in DB:', total);
+    
+    return result;
   }
   async createParcel(dto: CreateParcelDto) {
     try {

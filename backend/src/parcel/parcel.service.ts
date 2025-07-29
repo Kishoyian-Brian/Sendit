@@ -221,9 +221,15 @@ export class ParcelService {
     };
   }
 
-  async getParcelsByUser(userId: number): Promise<ParcelResponseDto[]> {
+  async getParcelsByUser(userId: number, userEmail: string): Promise<ParcelResponseDto[]> {
+    console.log('getParcelsByUser called with userId:', userId, 'and userEmail:', userEmail);
     const parcels = await this.prisma.parcel.findMany({
-      where: { senderId: userId },
+      where: {
+        OR: [
+          { senderId: userId },
+          { recipientEmail: userEmail }
+        ]
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         sender: { select: { id: true, name: true, email: true } },
@@ -231,7 +237,7 @@ export class ParcelService {
         route: { orderBy: { timestamp: 'desc' } }
       }
     });
-
+    console.log('Found parcels in database:', parcels.length);
     return parcels.map(parcel => this.toResponseDto(parcel));
   }
 

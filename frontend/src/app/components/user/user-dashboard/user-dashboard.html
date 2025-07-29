@@ -1,4 +1,4 @@
-<app-navbar></app-navbar>
+<app-navbar [dashboardType]="'user'"></app-navbar>
 <div class="min-h-screen bg-gray-100 flex">
   <!-- Sidebar -->
   <aside class="w-64 bg-white shadow-md p-8 flex flex-col gap-6">
@@ -11,33 +11,43 @@
     <div *ngIf="loading" class="text-lg">Loading...</div>
 
     <ng-container *ngIf="!loading">
-      <div class="w-full max-w-4xl">
+      <div class="w-full max-w-6xl">
         <h1 class="text-2xl font-bold text-gray-800 mb-8">My Parcels</h1>
         
-        <div *ngFor="let parcel of parcels" class="bg-white rounded-lg shadow-lg p-8 w-full mb-6">
-          <div class="mb-4 border-b pb-2">
-            <div class="font-bold">Tracking #: {{ parcel.trackingNumber }}</div>
-            <div>Status: <span class="font-semibold">{{ parcel.status | titlecase }}</span></div>
-          </div>
-          <div class="mb-4">
-            <div class="font-semibold mb-2">Parcel Details</div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <strong>Pickup Address:</strong> {{ parcel.pickupAddress }}
-              </div>
-              <div>
-                <strong>Delivery Address:</strong> {{ parcel.deliveryAddress }}
-              </div>
-              <div *ngIf="parcel.weight">
-                <strong>Weight:</strong> {{ parcel.weight }}
-              </div>
-              <div *ngIf="parcel.description">
-                <strong>Description:</strong> {{ parcel.description }}
+        <!-- Parcels in a row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let parcel of parcels" class="bg-white rounded-lg shadow-lg p-4">
+            <div class="mb-3 border-b pb-2">
+              <div class="font-bold text-sm">Tracking #: {{ parcel.trackingNumber }}</div>
+              <div class="text-xs">Status: <span class="font-semibold">{{ parcel.status | titlecase }}</span></div>
+            </div>
+            <div class="mb-3">
+              <div class="font-semibold text-sm mb-2">Parcel Details</div>
+              <div class="grid grid-cols-1 gap-2 text-sm">
+                <div>
+                  <strong>Pickup:</strong> {{ parcel.pickupAddress }}
+                </div>
+                <div>
+                  <strong>Delivery:</strong> {{ parcel.deliveryAddress }}
+                </div>
+                <div *ngIf="parcel.weight">
+                  <strong>Weight:</strong> {{ parcel.weight }}
+                </div>
+                <div *ngIf="parcel.description">
+                  <strong>Description:</strong> {{ parcel.description }}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="text-sm text-gray-600">
-            Created: {{ parcel.createdAt | date:'medium' }}
+            <div class="flex justify-between items-center">
+              <div class="text-xs text-gray-600">
+                Created: {{ parcel.createdAt | date:'medium' }}
+              </div>
+              <button 
+                (click)="trackParcel(parcel.trackingNumber)" 
+                class="px-3 py-1 bg-[#b72222] text-white rounded hover:bg-[#a01e1e] text-xs">
+                Track
+              </button>
+            </div>
           </div>
         </div>
         

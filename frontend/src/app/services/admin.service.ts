@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { map } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 
 export interface Parcel {
   id?: number;
@@ -92,16 +93,25 @@ export class AdminService {
   ) {}
 
   // Parcel Management
-  getParcels(): Observable<Parcel[]> {
-    return this.http.get<Parcel[]>(`${this.API_URL}/admin/parcels`, {
+  getParcels(page: number = 1, pageSize: number = 12): Observable<any> {
+    const url = `${this.API_URL}/admin/parcels?page=${page}&pageSize=${pageSize}`;
+    console.log('Making parcels API call to:', url);
+    return this.http.get<any>(url, {
       headers: this.authService.getAuthHeaders()
     });
   }
 
   createParcel(parcel: CreateParcelDto): Observable<Parcel> {
+    console.log('AdminService.createParcel called with:', parcel);
     return this.http.post<Parcel>(`${this.API_URL}/admin/parcels`, parcel, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(
+      tap(response => console.log('CreateParcel response:', response)),
+      catchError(error => {
+        console.error('CreateParcel error:', error);
+        throw error;
+      })
+    );
   }
 
   updateParcel(id: string, parcel: UpdateParcelDto): Observable<Parcel> {
@@ -131,12 +141,12 @@ export class AdminService {
   }
 
   // User Management
-  getUsers(): Observable<any[]> {
-    return this.http.get<any>(`${this.API_URL}/users`, {
+  getUsers(page: number = 1, pageSize: number = 12): Observable<any> {
+    const url = `${this.API_URL}/users?page=${page}&pageSize=${pageSize}`;
+    console.log('Making API call to:', url);
+    return this.http.get<any>(url, {
       headers: this.authService.getAuthHeaders()
-    }).pipe(
-      map(response => response.data?.data || [])
-    );
+    });
   }
 
   promoteToDriver(userId: string): Observable<any> {
@@ -147,6 +157,12 @@ export class AdminService {
 
   demoteFromDriver(userId: string): Observable<any> {
     return this.http.patch<any>(`${this.API_URL}/users/${userId}/demote-from-driver`, {}, {
+      headers: this.authService.getAuthHeaders()
+    });
+  }
+
+  deleteUser(userId: string): Observable<any> {
+    return this.http.delete<any>(`${this.API_URL}/users/${userId}`, {
       headers: this.authService.getAuthHeaders()
     });
   }

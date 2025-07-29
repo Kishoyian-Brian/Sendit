@@ -45,6 +45,7 @@ export class AuthService {
         name: dto.name,
         email: dto.email,
         password: hashedPassword,
+        phone: dto.phone,
         role: 'USER', // Default role for new users
       },
     });
@@ -95,6 +96,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        phone: user.phone,
         role: user.role,
       },
     };

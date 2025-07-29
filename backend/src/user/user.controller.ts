@@ -59,7 +59,13 @@ export class UserController {
   @UseGuards(RoleGuard, PermissionsGuard)
   @Roles('ADMIN')
   @RequirePermissions('user.delete')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Req() req) {
+    // Prevent admin from deleting themselves
+    const currentUserId = req.user.userId;
+    if (currentUserId === Number(id)) {
+      throw new Error('You cannot delete your own account');
+    }
+    
     await this.userService.remove(Number(id));
     return new ApiResponse(true, null, 'User deleted');
   }
@@ -69,7 +75,13 @@ export class UserController {
   @UseGuards(RoleGuard, PermissionsGuard)
   @Roles('ADMIN')
   @RequirePermissions('user.update')
-  async promoteToDriver(@Param('id') id: string) {
+  async promoteToDriver(@Param('id') id: string, @Req() req) {
+    // Prevent admin from changing their own role
+    const currentUserId = req.user.userId;
+    if (currentUserId === Number(id)) {
+      throw new Error('You cannot change your own role');
+    }
+    
     const user = await this.userService.promoteToDriver(Number(id));
     return new ApiResponse(true, user, 'User promoted to driver');
   }
@@ -79,7 +91,13 @@ export class UserController {
   @UseGuards(RoleGuard, PermissionsGuard)
   @Roles('ADMIN')
   @RequirePermissions('user.update')
-  async demoteFromDriver(@Param('id') id: string) {
+  async demoteFromDriver(@Param('id') id: string, @Req() req) {
+    // Prevent admin from changing their own role
+    const currentUserId = req.user.userId;
+    if (currentUserId === Number(id)) {
+      throw new Error('You cannot change your own role');
+    }
+    
     const user = await this.userService.demoteFromDriver(Number(id));
     return new ApiResponse(true, user, 'Driver demoted to user');
   }

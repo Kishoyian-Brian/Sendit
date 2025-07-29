@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { adminGuard } from './guards/admin-guard';
 import { driverGuard } from './guards/driver-guard';
 import { authGuard } from './guards/auth-guard';
+import { userGuard } from './guards/user-guard';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./components/landingpage/home/home').then(m => m.Home) },
@@ -22,7 +23,13 @@ export const routes: Routes = [
   },
   {
     path: 'user-dashboard',
-    loadComponent: () => import('./components/user/user-dashboard/user-dashboard').then(m => m.UserDashboard)
+    loadComponent: () => import('./components/user/user-dashboard/user-dashboard').then(m => m.UserDashboard),
+    canActivate: [userGuard]
+  },
+  {
+    path: 'user-profile',
+    loadComponent: () => import('./components/user/user-profile/user-profile').then(m => m.UserProfile),
+    canActivate: [userGuard]
   },
   { path: 'map-view/:trackingNumber', loadComponent: () => import('./components/map/map-view/map-view').then(m => m.MapView) }
 ];

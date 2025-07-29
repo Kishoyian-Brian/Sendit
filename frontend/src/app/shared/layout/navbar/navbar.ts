@@ -11,13 +11,38 @@ import { RouterModule } from '@angular/router';
   styles: ``
 })
 export class Navbar {
-  @Input() dashboardType?: 'admin' | 'driver';
+  @Input() dashboardType?: 'admin' | 'driver' | 'user';
   accountDropdownOpen = false;
 
   constructor(private router: Router, private authService: AuthService) {}
 
   get isLoggedIn(): boolean {
     return this.authService.isLoggedIn();
+  }
+
+  getCurrentUserInitial(): string {
+    const user = this.authService.getCurrentUser();
+    return user?.name && user.name.length > 0 ? user.name.charAt(0).toUpperCase() : 'U';
+  }
+
+  getCurrentUserName(): string {
+    const user = this.authService.getCurrentUser();
+    return user?.name || 'User';
+  }
+
+  getCurrentUserEmail(): string {
+    const user = this.authService.getCurrentUser();
+    return user?.email || '';
+  }
+
+  getCurrentUserPhone(): string {
+    const user = this.authService.getCurrentUser();
+    return user?.phone || '';
+  }
+
+  getCurrentUserRole(): string {
+    const user = this.authService.getCurrentUser();
+    return user?.role || 'USER';
   }
 
   toggleAccountDropdown() {
@@ -45,7 +70,7 @@ export class Navbar {
 
   goToProfile() {
     this.closeAccountDropdown();
-    this.router.navigate(['/user-dashboard']);
+    this.router.navigate(['/user-profile']);
   }
 
   logout() {

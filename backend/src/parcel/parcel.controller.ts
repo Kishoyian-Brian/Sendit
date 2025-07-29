@@ -68,7 +68,9 @@ export class ParcelController {
   @Get('my-parcels')
   @UseGuards(JwtAuthGuard)
   async getMyParcels(@Req() req): Promise<ApiResponse<ParcelResponseDto[]>> {
-    const parcels = await this.parcelService.getParcelsByUser(req.user.userId);
+    console.log('getMyParcels called with user:', req.user);
+    const parcels = await this.parcelService.getParcelsByUser(req.user.userId, req.user.email);
+    console.log('Found parcels for user:', parcels.length);
     return new ApiResponse(true, parcels, 'User parcels retrieved');
   }
 

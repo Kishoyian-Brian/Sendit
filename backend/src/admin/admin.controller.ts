@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateParcelDto } from './dto/create-parcel.dto';
 import { UpdateParcelDto } from './dto/update-parcel.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RoleGuard } from '../auth/guards/role.guards';
 import { Roles } from '../auth/decorators/role.decorator';
+import { ApiResponse, PaginatedResponse } from '../shared/api-response.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RoleGuard)
@@ -14,8 +15,9 @@ export class AdminController {
 
   // Parcels
   @Get('parcels')
-  getParcels() {
-    return this.adminService.getParcels();
+  async getParcels(@Query('page') page = '1', @Query('pageSize') pageSize = '12') {
+    const result = await this.adminService.getParcels(Number(page), Number(pageSize));
+    return new ApiResponse(true, new PaginatedResponse(result.data, result.total, result.page, result.pageSize));
   }
 
   @Post('parcels')

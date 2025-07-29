@@ -25,15 +25,30 @@ export class UserDashboard implements OnInit {
   ) {}
 
   ngOnInit() {
+    console.log('User Dashboard initialized');
+    console.log('Current user:', this.authService.getCurrentUser());
+    console.log('Is logged in:', this.authService.isLoggedIn());
     this.loadUserData();
   }
 
   loadUserData() {
     this.loading = true;
-    this.userService.getMyParcels().subscribe(parcels => {
-      this.parcels = parcels;
-      this.loading = false;
+    this.userService.getMyParcels().subscribe({
+      next: (parcels) => {
+        console.log('Parcels loaded:', parcels);
+        this.parcels = parcels;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading parcels:', error);
+        this.loading = false;
+      }
     });
+  }
+
+  trackParcel(trackingNumber: string) {
+    console.log('Tracking parcel:', trackingNumber);
+    this.router.navigate(['/map-view', trackingNumber]);
   }
 
   logout() {
