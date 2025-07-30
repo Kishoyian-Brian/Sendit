@@ -1,27 +1,25 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-async function checkAdmin() {
+async function checkAdminInAdminTable() {
   try {
-    const admin = await prisma.user.findFirst({
+    const admin = await prisma.admin.findFirst({
       where: { 
-        email: 'kishoyianbrianmwangi@gmail.com',
-        role: 'ADMIN'
+        email: 'kishoyianbrianmwangi@gmail.com'
       }
     });
 
     if (!admin) {
-      console.log('❌ Admin not found');
+      console.log('❌ Admin not found in Admin table');
       return;
     }
 
-    console.log('✅ Admin found:');
+    console.log('✅ Admin found in Admin table:');
     console.log('   ID:', admin.id);
     console.log('   Email:', admin.email);
     console.log('   Name:', admin.name);
-    console.log('   Role:', admin.role);
     console.log('   Password hash:', admin.password.substring(0, 20) + '...');
 
     // Test password verification
@@ -41,4 +39,4 @@ async function checkAdmin() {
   }
 }
 
-checkAdmin(); 
+checkAdminInAdminTable(); 

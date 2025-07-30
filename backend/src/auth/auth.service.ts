@@ -106,8 +106,10 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    console.log('🔍 Login attempt for email:', dto.email);
+    
     // Check regular user (including drivers)
-    const user = await this.prisma.user.findFirst({
+    let user = await this.prisma.user.findFirst({
       where: { email: dto.email },
       select: {
         id: true,
@@ -118,15 +120,45 @@ export class AuthService {
       },
     });
 
+    console.log('👤 User found in User table:', user ? 'Yes' : 'No');
+
+    // If not found in user table, check admin table
     if (!user) {
+      const admin = await this.prisma.admin.findFirst({
+        where: { email: dto.email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          name: true,
+        },
+      });
+
+      console.log('👑 Admin found in Admin table:', admin ? 'Yes' : 'No');
+
+      if (admin) {
+        user = {
+          ...admin,
+          role: 'ADMIN',
+        };
+        console.log('✅ Admin user created from Admin table');
+      }
+    }
+
+    if (!user) {
+      console.log('❌ No user found in either table');
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    console.log('🔐 Checking password for user:', user.email);
     const isPasswordValid = await bcrypt.compare(
       dto.password,
       user.password,
     );
+    console.log('🔑 Password valid:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('❌ Password validation failed');
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -137,6 +169,7 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+    console.log('✅ Login successful for:', user.email, 'Role:', user.role);
 
     return {
       accessToken,
