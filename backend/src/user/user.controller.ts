@@ -34,6 +34,16 @@ export class UserController {
     return new ApiResponse(true, new PaginatedResponse(result.data, result.total, result.page, result.pageSize));
   }
 
+  // Any authenticated user can get their own profile
+  @Get('/me')
+  async getMe(@Req() req) {
+    // For demo: derive permissions from role
+    const user = req.user;
+    user.permissions = derivePermissionsFromRole(user.role);
+    const me = await this.userService.getMe(user.userId);
+    return new ApiResponse(true, me);
+  }
+
   // Only admins can get any user by id
   @Get(':id')
   @UseGuards(RoleGuard, PermissionsGuard)
@@ -102,15 +112,6 @@ export class UserController {
     return new ApiResponse(true, user, 'Driver demoted to user');
   }
 
-  // Any authenticated user can get their own profile
-  @Get('/me')
-  async getMe(@Req() req) {
-    // For demo: derive permissions from role
-    const user = req.user;
-    user.permissions = derivePermissionsFromRole(user.role);
-    const me = await this.userService.getMe(user.userId);
-    return new ApiResponse(true, me);
-  }
 }
 
 // Demo: derive permissions from role

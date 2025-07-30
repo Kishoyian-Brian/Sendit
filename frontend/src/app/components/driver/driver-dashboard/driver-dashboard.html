@@ -32,16 +32,16 @@
           <p class="text-3xl font-bold">{{ stats.todayDeliveries || 0 }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-gray-500 text-sm mb-2">Weekly Deliveries</h3>
-          <p class="text-3xl font-bold">{{ stats.weeklyDeliveries || 0 }}</p>
+          <h3 class="text-gray-500 text-sm mb-2">Active Deliveries</h3>
+          <p class="text-3xl font-bold">{{ stats.activeParcels || 0 }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-gray-500 text-sm mb-2">Monthly Rating</h3>
-          <p class="text-3xl font-bold text-yellow-500">{{ stats.monthlyRating || 0 }}/5</p>
+          <h3 class="text-gray-500 text-sm mb-2">Total Delivered</h3>
+          <p class="text-3xl font-bold text-green-600">{{ stats.deliveredParcels || 0 }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-gray-500 text-sm mb-2">Total Earnings</h3>
-          <p class="text-3xl font-bold text-green-600">KES {{ stats.totalEarnings || 0 }}</p>
+          <h3 class="text-gray-500 text-sm mb-2">Delivery Rate</h3>
+          <p class="text-3xl font-bold text-blue-600">{{ stats.deliveryRate || 0 }}%</p>
         </div>
       </div>
 

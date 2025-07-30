@@ -19,6 +19,7 @@ export interface DriverStats {
   totalParcels: number;
   activeParcels: number;
   deliveredParcels: number;
+  todayDeliveries: number;
   deliveryRate: number;
 }
 

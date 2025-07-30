@@ -46,26 +46,6 @@
         >
           Users
         </button>
-        <button 
-          (click)="showSection('reports')"
-          class="w-full text-left px-4 py-2 rounded"
-          [class.bg-red-600]="currentSection === 'reports'"
-          [class.text-white]="currentSection === 'reports'"
-          [class.hover:bg-red-700]="currentSection === 'reports'"
-          [class.hover:bg-gray-100]="currentSection !== 'reports'"
-        >
-          Reports
-        </button>
-        <button 
-          (click)="showSection('map')"
-          class="w-full text-left px-4 py-2 rounded"
-          [class.bg-red-600]="currentSection === 'map'"
-          [class.text-white]="currentSection === 'map'"
-          [class.hover:bg-red-700]="currentSection === 'map'"
-          [class.hover:bg-gray-100]="currentSection !== 'map'"
-        >
-          🗺️ Map View
-        </button>
       </div>
     </div>
 
@@ -95,8 +75,94 @@
 
         <!-- Recent Activity -->
         <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
-          <!-- Add recent activity list here -->
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Recent Activity</h2>
+            <div class="text-sm text-gray-500">
+              Showing {{recentActivities.length}} of {{totalActivities}} activities
+            </div>
+          </div>
+          
+          @if (recentActivities.length > 0) {
+            <div class="space-y-4">
+              @for (activity of recentActivities; track activity.id) {
+                <div class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-lg">
+                    {{activity.icon}}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{activity.title}}</p>
+                    <p class="text-sm text-gray-500">{{activity.description}}</p>
+                    <div class="flex items-center mt-1">
+                      <span class="text-xs text-gray-400">
+                        {{activity.timestamp | date:'MMM dd, yyyy HH:mm'}}
+                      </span>
+                      <span class="mx-2 text-gray-300">•</span>
+                      <span 
+                        class="text-xs px-2 py-1 rounded-full"
+                        [class.bg-green-100]="activity.status === 'delivered'"
+                        [class.text-green-800]="activity.status === 'delivered'"
+                        [class.bg-yellow-100]="activity.status === 'pending'"
+                        [class.text-yellow-800]="activity.status === 'pending'"
+                        [class.bg-blue-100]="activity.status === 'in_transit'"
+                        [class.text-blue-800]="activity.status === 'in_transit'"
+                        [class.bg-purple-100]="activity.status === 'USER'"
+                        [class.text-purple-800]="activity.status === 'USER'"
+                        [class.bg-orange-100]="activity.status === 'DRIVER'"
+                        [class.text-orange-800]="activity.status === 'DRIVER'"
+                      >
+                        {{activity.status}}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Activity Pagination -->
+            @if (totalActivityPages > 1) {
+              <div class="mt-6 flex justify-center">
+                <nav class="flex items-center space-x-2">
+                  <!-- Previous Button -->
+                  <button 
+                    (click)="goToActivityPage(currentActivityPage - 1)"
+                    [disabled]="currentActivityPage === 1"
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+
+                  <!-- Page Numbers -->
+                  @for (page of getActivityPageNumbers(); track page) {
+                    <button 
+                      (click)="goToActivityPage(page)"
+                      [class.bg-red-600]="page === currentActivityPage"
+                      [class.text-white]="page === currentActivityPage"
+                      [class.bg-white]="page !== currentActivityPage"
+                      [class.text-gray-700]="page !== currentActivityPage"
+                      class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      {{page}}
+                    </button>
+                  }
+
+                  <!-- Next Button -->
+                  <button 
+                    (click)="goToActivityPage(currentActivityPage + 1)"
+                    [disabled]="currentActivityPage === totalActivityPages"
+                    class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </nav>
+              </div>
+            }
+          } @else {
+            <div class="text-center py-8 text-gray-500">
+              <div class="text-4xl mb-2">📊</div>
+              <p class="text-lg font-medium">No recent activities</p>
+              <p class="text-sm">Activities will appear here as they happen</p>
+            </div>
+          }
         </div>
       }
 
@@ -220,65 +286,62 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-semibold">Manage Drivers</h2>
-            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" (click)="openAddDriverModal()">
-              + Add Driver
-            </button>
+            <div class="flex gap-4">
+              <input 
+                type="text" 
+                [(ngModel)]="driverSearchTerm"
+                placeholder="Search drivers..."
+                class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+              >
+              <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" (click)="openAddDriverModal()">
+                + Add Driver
+              </button>
+            </div>
           </div>
 
-          <!-- Drivers Grid -->
-          <div class="grid grid-cols-2 gap-6">
-            @for (driver of drivers; track driver.id) {
-              <div class="border rounded-lg p-4">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h3 class="text-lg font-semibold">{{driver.name}}</h3>
-                    <p class="text-gray-500">ID: {{driver.id}}</p>
-                  </div>
-                  <span 
-                    class="px-2 py-1 rounded-full text-sm font-semibold"
-                    [class.bg-green-100]="driver.status === 'active'"
-                    [class.text-green-800]="driver.status === 'active'"
-                    [class.bg-red-100]="driver.status === 'inactive'"
-                    [class.text-red-800]="driver.status === 'inactive'"
-                  >
-                    {{driver.status}}
-                  </span>
-                </div>
-                <div class="mt-4 space-y-2">
-                  <p class="text-sm">
-                    <span class="font-semibold">Location:</span> {{driver.currentLocation}}
-                  </p>
-                  <p class="text-sm">
-                    <span class="font-semibold">Deliveries:</span> {{driver.parcelsDelivered}}
-                  </p>
-                  <p class="text-sm">
-                    <span class="font-semibold">Rating:</span> {{driver.rating}}/5.0
-                  </p>
-                  <p class="text-sm">
-                    <span class="font-semibold">Phone:</span> {{driver.phone}}
-                  </p>
-                </div>
-                <div class="mt-4 flex justify-end gap-2">
-                  <button class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Edit
-                  </button>
-                  <button 
-                    class="px-3 py-1 rounded border"
-                    [class.bg-red-600]="driver.status === 'active'"
-                    [class.text-white]="driver.status === 'active'"
-                    [class.border-red-600]="driver.status === 'active'"
-                    [class.hover:bg-red-700]="driver.status === 'active'"
-                    [class.bg-green-600]="driver.status === 'inactive'"
-                    [class.text-white]="driver.status === 'inactive'"
-                    [class.border-green-600]="driver.status === 'inactive'"
-                    [class.hover:bg-green-700]="driver.status === 'inactive'"
-                    (click)="toggleDriverStatus(driver)"
-                  >
-                    {{driver.status === 'active' ? 'Deactivate' : 'Activate'}}
-                  </button>
-                </div>
-              </div>
-            }
+          <!-- Drivers Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                @for (driver of filterDrivers(); track driver.id) {
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">{{driver.id}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{driver.name}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{driver.email}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{driver.phone || 'N/A'}}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span 
+                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800"
+                      >
+                        {{driver.role}}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{driver.createdAt | date:'short'}}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        class="text-red-600 hover:text-red-900" 
+                        (click)="removeDriver(driver)"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       }
@@ -423,25 +486,7 @@
         </div>
       }
 
-      <!-- Reports Section -->
-      @if (currentSection === 'reports') {
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-semibold">Reports</h2>
-            <button 
-              (click)="exportData()"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Export Data
-            </button>
-          </div>
 
-          <!-- Reports Grid -->
-          <div class="grid grid-cols-2 gap-6">
-            <!-- Add report cards/charts here -->
-          </div>
-        </div>
-      }
     </div>
   </div>
 </div>
@@ -583,8 +628,14 @@
             Cancel
           </button>
           <button type="submit" 
-            class="px-6 py-2 bg-[#7B1C2F] text-white rounded-lg shadow hover:bg-[#BA0C2F] transition text-sm font-semibold">
-            {{editingParcel ? 'Update Package' : 'Create Package'}}
+            [disabled]="isCreatingParcel"
+            class="px-6 py-2 bg-[#7B1C2F] text-white rounded-lg shadow hover:bg-[#BA0C2F] transition text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2">
+            <svg *ngIf="isCreatingParcel" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span *ngIf="!isCreatingParcel">{{editingParcel ? 'Update Package' : 'Create Package'}}</span>
+            <span *ngIf="isCreatingParcel">{{editingParcel ? 'Updating...' : 'Creating...'}}</span>
           </button>
         </div>
       </form>

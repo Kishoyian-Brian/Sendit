@@ -42,10 +42,11 @@ export class AdminDashboard implements OnInit {
   Math = Math;
 
   stats: any = {};
-  currentSection: 'overview' | 'parcels' | 'drivers' | 'users' | 'reports' | 'map' = 'overview';
+  currentSection: 'overview' | 'parcels' | 'drivers' | 'users' = 'overview';
   searchTerm = '';
   userSearchTerm = '';
   parcelSearchTerm = '';
+  driverSearchTerm = '';
   statusFilter: string = 'all';
   dateFilter: string = 'all';
   parcels: any[] = [];
@@ -89,6 +90,13 @@ export class AdminDashboard implements OnInit {
   deliveryLocation: { lat: number; lng: number } | null = null;
   showLocationMapModal: boolean = false;
   locationTypeBeingSet: 'delivery' | null = null;
+  isCreatingParcel: boolean = false;
+  recentActivities: any[] = [];
+  allActivities: any[] = [];
+  currentActivityPage = 1;
+  activityPageSize = 5;
+  totalActivities = 0;
+  totalActivityPages = 0;
 
   openLocationMap(type: 'delivery') {
     this.locationTypeBeingSet = type;
@@ -115,9 +123,27 @@ export class AdminDashboard implements OnInit {
 
   loadAll() {
     this.loadParcels();
-    this.adminService.getDrivers().subscribe(drivers => this.drivers = drivers);
+    this.loadDrivers();
     this.loadUsers();
+    this.loadRecentActivities();
     this.adminService.getStats().subscribe(stats => this.stats = stats);
+  }
+
+  loadDrivers() {
+    console.log('Loading drivers...');
+    this.adminService.getDrivers().subscribe({
+      next: (drivers) => {
+        console.log('Drivers loaded:', drivers);
+        this.drivers = drivers;
+        
+        // Refresh recent activities when drivers are loaded
+        this.loadRecentActivities();
+      },
+      error: (error) => {
+        console.error('Error loading drivers:', error);
+        this.toast.show('Failed to load drivers', 'error');
+      }
+    });
   }
 
   loadParcels() {
@@ -150,6 +176,9 @@ export class AdminDashboard implements OnInit {
         console.log('Total parcels:', this.totalParcels);
         console.log('Total parcel pages:', this.totalParcelPages);
         console.log('Parcels array length:', this.parcels.length);
+        
+        // Refresh recent activities when parcels are loaded
+        this.loadRecentActivities();
       },
       error: (error) => {
         console.error('Error loading parcels:', error);
@@ -206,12 +235,118 @@ export class AdminDashboard implements OnInit {
         console.log('Processed users:', this.users);
         console.log('Total users:', this.totalUsers);
         console.log('Total pages:', this.totalPages);
+        
+        // Refresh recent activities when users are loaded
+        this.loadRecentActivities();
       },
       error: (error) => {
         console.error('Error loading users:', error);
         this.toast.show('Failed to load users', 'error');
       }
     });
+  }
+
+  loadRecentActivities() {
+    // Generate all activities based on current data
+    this.allActivities = [];
+    
+    // Add parcel activities
+    if (this.parcels.length > 0) {
+      this.parcels.forEach(parcel => {
+        this.allActivities.push({
+          id: parcel.id,
+          type: 'parcel',
+          action: 'created',
+          title: `Parcel ${parcel.trackingNumber} created`,
+          description: `Parcel from ${parcel.pickupAddress} to ${parcel.deliveryAddress}`,
+          timestamp: parcel.createdAt,
+          status: parcel.status,
+          icon: '📦'
+        });
+      });
+    }
+
+    // Add user activities
+    if (this.users.length > 0) {
+      this.users.forEach(user => {
+        this.allActivities.push({
+          id: user.id,
+          type: 'user',
+          action: 'registered',
+          title: `User ${user.name} registered`,
+          description: `New user with email ${user.email}`,
+          timestamp: user.createdAt,
+          status: user.role,
+          icon: '👤'
+        });
+      });
+    }
+
+    // Add driver activities
+    if (this.drivers.length > 0) {
+      this.drivers.forEach(driver => {
+        this.allActivities.push({
+          id: driver.id,
+          type: 'driver',
+          action: 'assigned',
+          title: `Driver ${driver.name} assigned`,
+          description: `Driver with email ${driver.email}`,
+          timestamp: driver.createdAt,
+          status: driver.role,
+          icon: '🚗'
+        });
+      });
+    }
+
+    // Sort by timestamp (most recent first)
+    this.allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    // Calculate pagination
+    this.totalActivities = this.allActivities.length;
+    this.totalActivityPages = Math.ceil(this.totalActivities / this.activityPageSize);
+    
+    // Get current page activities
+    this.updateCurrentActivityPage();
+  }
+
+  updateCurrentActivityPage() {
+    const startIndex = (this.currentActivityPage - 1) * this.activityPageSize;
+    const endIndex = startIndex + this.activityPageSize;
+    this.recentActivities = this.allActivities.slice(startIndex, endIndex);
+  }
+
+  goToActivityPage(page: number) {
+    if (page >= 1 && page <= this.totalActivityPages) {
+      this.currentActivityPage = page;
+      this.updateCurrentActivityPage();
+    }
+  }
+
+  getActivityPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    if (this.totalActivityPages <= maxVisiblePages) {
+      for (let i = 1; i <= this.totalActivityPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (this.currentActivityPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+      } else if (this.currentActivityPage >= this.totalActivityPages - 2) {
+        for (let i = this.totalActivityPages - 4; i <= this.totalActivityPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        for (let i = this.currentActivityPage - 2; i <= this.currentActivityPage + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
   }
 
   // Pagination methods
@@ -249,8 +384,11 @@ export class AdminDashboard implements OnInit {
     return pages;
   }
 
-  showSection(section: 'overview' | 'parcels' | 'drivers' | 'users' | 'reports' | 'map') {
+  showSection(section: 'overview' | 'parcels' | 'drivers' | 'users') {
     this.currentSection = section;
+    if (section === 'drivers') {
+      this.loadDrivers();
+    }
   }
 
   assignDriver(parcel: any, driver: any) {
@@ -273,11 +411,18 @@ export class AdminDashboard implements OnInit {
     });
   }
 
-  toggleDriverStatus(driver: any) {
-    // Use demoteFromDriver to toggle driver status
-    this.adminService.demoteFromDriver(driver.id).subscribe(() => {
-      this.loadAll();
-      this.toast.show('Driver status updated!', 'success');
+  removeDriver(driver: any) {
+    // Demote driver back to user role
+    this.adminService.demoteFromDriver(driver.id?.toString() || '').subscribe({
+      next: () => {
+        this.toast.show('Driver removed successfully!', 'success');
+        this.loadDrivers();
+        this.loadUsers();
+      },
+      error: (error) => {
+        console.error('Error removing driver:', error);
+        this.toast.show('Failed to remove driver', 'error');
+      }
     });
   }
 
@@ -285,11 +430,13 @@ export class AdminDashboard implements OnInit {
     let filtered = [...this.parcels];
     if (this.parcelSearchTerm) {
       const search = this.parcelSearchTerm.toLowerCase();
+      console.log('Filtering parcels with search term:', search);
       filtered = filtered.filter(p =>
-        p.trackingNumber.toLowerCase().includes(search) ||
-        p.recipientName.toLowerCase().includes(search) ||
-        p.recipientEmail.toLowerCase().includes(search)
+        p.trackingNumber?.toLowerCase().includes(search) ||
+        p.recipientName?.toLowerCase().includes(search) ||
+        p.recipientEmail?.toLowerCase().includes(search)
       );
+      console.log('Filtered parcels:', filtered.length);
     }
     if (this.statusFilter !== 'all') {
       filtered = filtered.filter(p => p.status === this.statusFilter);
@@ -302,12 +449,30 @@ export class AdminDashboard implements OnInit {
     let filtered = [...this.users];
     if (this.userSearchTerm) {
       const search = this.userSearchTerm.toLowerCase();
+      console.log('Filtering users with search term:', search);
       filtered = filtered.filter(user =>
         user.name?.toLowerCase().includes(search) ||
         user.email?.toLowerCase().includes(search) ||
         user.phone?.toLowerCase().includes(search) ||
         user.role?.toLowerCase().includes(search)
       );
+      console.log('Filtered users:', filtered.length);
+    }
+    return filtered;
+  }
+
+  filterDrivers() {
+    let filtered = [...this.drivers];
+    if (this.driverSearchTerm) {
+      const search = this.driverSearchTerm.toLowerCase();
+      console.log('Filtering drivers with search term:', search);
+      filtered = filtered.filter(driver =>
+        driver.name?.toLowerCase().includes(search) ||
+        driver.email?.toLowerCase().includes(search) ||
+        driver.phone?.toLowerCase().includes(search) ||
+        driver.role?.toLowerCase().includes(search)
+      );
+      console.log('Filtered drivers:', filtered.length);
     }
     return filtered;
   }
@@ -321,6 +486,20 @@ export class AdminDashboard implements OnInit {
     this.editingParcel = null;
     this.resetForm();
     this.showCreateParcelModal = true;
+    
+    // Load all users for parcel creation (not just paginated ones)
+    this.adminService.getUsers(1, 1000).subscribe({
+      next: (response: any) => {
+        console.log('All users response for parcel creation:', response);
+        const paginatedData = response.data;
+        this.users = paginatedData?.data || [];
+        console.log('All users loaded for parcel creation:', this.users.length);
+      },
+      error: (error) => {
+        console.error('Error loading all users for parcel creation:', error);
+        this.toast.show('Failed to load users', 'error');
+      }
+    });
   }
 
   closeCreateParcelModal() {
@@ -422,8 +601,19 @@ export class AdminDashboard implements OnInit {
       return;
     }
 
+    // Set loading state
+    this.isCreatingParcel = true;
+
+    // Find the sender user by email
+    const senderUser = this.users.find(user => user.email === this.senderEmail);
+    if (!senderUser) {
+      this.toast.show('Sender email not found in registered users. Please use a registered user email.', 'error');
+      this.isCreatingParcel = false;
+      return;
+    }
+
     const parcelData = {
-      senderId: this.authService.getCurrentUser()?.id || 1, // Use current admin's ID
+      senderId: senderUser.id, // Use the found user's ID
       recipientName: this.receiverName,
       recipientEmail: this.receiverEmail,
       recipientPhone: this.receiverPhone,
@@ -448,10 +638,12 @@ export class AdminDashboard implements OnInit {
           this.closeCreateParcelModal();
           this.loadParcels();
           this.resetForm();
+          this.isCreatingParcel = false;
         },
         error: (error) => {
           console.error('Error updating parcel:', error);
           this.toast.show(error.error?.message || 'Failed to update parcel. Please try again.', 'error');
+          this.isCreatingParcel = false;
         }
       });
     } else {
@@ -463,10 +655,12 @@ export class AdminDashboard implements OnInit {
           this.closeCreateParcelModal();
           this.loadParcels();
           this.resetForm();
+          this.isCreatingParcel = false;
         },
         error: (error) => {
           console.error('Error creating parcel:', error);
           this.toast.show(error.error?.message || 'Failed to create order. Please try again.', 'error');
+          this.isCreatingParcel = false;
         }
       });
     }
@@ -484,18 +678,24 @@ export class AdminDashboard implements OnInit {
   }
 
   openAddDriverModal() {
+    // Show the modal immediately
+    this.showAddDriverModal = true;
+    
     // Get all users and drivers, filter users not already drivers
-    this.adminService.getUsers().subscribe({
-      next: (users) => {
-        console.log('Users received:', users);
+    this.adminService.getUsers(1, 1000).subscribe({
+      next: (response: any) => {
+        console.log('Users response in modal:', response);
+        // Handle nested response structure: response.data.data
+        const paginatedData = response.data;
+        const users = paginatedData?.data || [];
+        
         this.adminService.getDrivers().subscribe({
           next: (drivers) => {
-            console.log('Drivers received:', drivers);
+            console.log('Drivers response in modal:', drivers);
             const driverEmails = new Set(drivers.map((d: any) => d.email.toLowerCase()));
             this.eligibleUsers = users.filter((u: any) => !driverEmails.has(u.email.toLowerCase()));
             console.log('Eligible users:', this.eligibleUsers);
             this.selectedUserEmail = '';
-            this.showAddDriverModal = true;
           },
           error: (error) => {
             console.error('Error getting drivers:', error);
@@ -526,7 +726,8 @@ export class AdminDashboard implements OnInit {
       next: () => {
         this.toast.show('User promoted to driver successfully!', 'success');
         this.closeAddDriverModal();
-        this.loadAll();
+        this.loadDrivers();
+        this.loadUsers();
       },
       error: (error) => {
         console.error('Error promoting user to driver:', error);
@@ -569,6 +770,7 @@ export class AdminDashboard implements OnInit {
       next: () => {
         this.toast.show('User promoted to driver successfully!', 'success');
         this.loadUsers();
+        this.loadDrivers();
       },
       error: (error) => {
         console.error('Error promoting user to driver:', error);
@@ -582,6 +784,7 @@ export class AdminDashboard implements OnInit {
       next: () => {
         this.toast.show('Driver demoted to user successfully!', 'success');
         this.loadUsers();
+        this.loadDrivers();
       },
       error: (error) => {
         console.error('Error demoting driver to user:', error);
